@@ -1,0 +1,45 @@
+# Dipendenze Node (se introdotte in futuro)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# IDE / Editor file di configurazione
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# File di sistema operativi
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# File di Log e Temporanei
+logs/
+*.log
+.temp/
+.tmp/
+.cache/
+
+# File di build / cartelle di output
+dist/
+build/
+out/
+
+# Variabili d'ambiente
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
