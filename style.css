@@ -433,3 +433,18 @@ body {
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-color);
 }
+
+/* Vertical Headers styling for S_ columns */
+.vertical-header .ag-header-cell-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: visible;
+}
+.vertical-header .ag-header-cell-text {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+}

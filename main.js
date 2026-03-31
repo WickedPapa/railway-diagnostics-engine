@@ -4,9 +4,11 @@ let allColumns = [];
 let gridApi = null;
 let currentPresetId = 'base';
 
+const MANDATORY_COLUMNS = ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
+
 // Struttura Presets: { id : { name: string, columns: string[] } }
 let presets = {
-    'base': { name: 'Base (Tutte le colonne)', columns: [] }
+    'base': { name: 'Vista Base (Solo Essenziali)', columns: [...MANDATORY_COLUMNS] }
 };
 
 // --- DOM Elements ---
@@ -80,7 +82,7 @@ function loadPresetsFromStorage() {
         try {
             const parsed = JSON.parse(saved);
             // Ensure base always exists
-            presets = { ...parsed, base: { name: 'Base (Tutte le colonne)', columns: [] } };
+            presets = { ...parsed, base: { name: 'Vista Base (Solo Essenziali)', columns: [...MANDATORY_COLUMNS] } };
         } catch (e) {
             console.error("Errore nel caricamento presets", e);
         }
@@ -153,6 +155,7 @@ function initAgGrid() {
     const gridOptions = {
         columnDefs: generateColumnDefs('base'),
         rowData: rawData,
+        headerHeight: 350,
         defaultColDef: {
             sortable: true,
             filter: true,
@@ -177,14 +180,32 @@ function initAgGrid() {
 
 function generateColumnDefs(presetId) {
     let colsToShow = allColumns;
-    if (presetId !== 'base' && presets[presetId]) {
+    if (presets[presetId]) {
         colsToShow = presets[presetId].columns;
     }
 
-    return colsToShow.map(col => ({
-        field: col,
-        headerName: col
-    }));
+    return colsToShow.map(col => {
+        let def = { field: col, headerName: col };
+        
+        let colUpper = col.toUpperCase();
+        
+        if (colUpper === 'VEHICLE') {
+            def.headerName = 'N';
+        } else if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO') {
+            def.valueFormatter = (params) => {
+                if (params.value && typeof params.value === 'string') {
+                    // Try removing all but the first decimal
+                    return params.value.replace(/(\.\d)\d+$/, '$1');
+                }
+                return params.value;
+            };
+        } else if (colUpper.startsWith('S_')) {
+            def.headerClass = 'vertical-header';
+            def.width = 60;
+        }
+
+        return def;
+    });
 }
 
 function applyPresetToGrid() {
@@ -210,11 +231,12 @@ function openModal(mode) {
     tempSelectedColumns.clear();
 
     if (mode === 'clone') {
-        modalTitle.textContent = "Crea Nuovo Preset (Clona da: " + presets[currentPresetId].name + ")";
-        presetNameInput.value = presets[currentPresetId].name + " - Copia";
+        const titleSuffix = currentPresetId === 'base' ? "Nuova Vista" : presets[currentPresetId].name + " - Copia";
+        modalTitle.textContent = "Crea Nuovo Preset (Da: " + presets[currentPresetId].name + ")";
+        presetNameInput.value = titleSuffix;
         
         // Populate temp selection from current preset
-        const currentCols = currentPresetId === 'base' ? allColumns : presets[currentPresetId].columns;
+        const currentCols = presets[currentPresetId].columns;
         currentCols.forEach(col => tempSelectedColumns.add(col));
     } else {
         // Edit mode (only if not base)
@@ -238,38 +260,46 @@ function renderCheckboxes() {
     const filterText = columnSearchInput.value.toLowerCase();
     columnListContainer.innerHTML = '';
     
-    let visibleCount = 0;
+    // Filter out mandatory columns and apply text filter
+    let availableCols = allColumns.filter(c => !MANDATORY_COLUMNS.includes(c) && c.toLowerCase().includes(filterText));
+    
+    // Sort so selected are grouped at the top
+    availableCols.sort((a, b) => {
+        const aSelected = tempSelectedColumns.has(a);
+        const bSelected = tempSelectedColumns.has(b);
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        return 0;
+    });
 
-    allColumns.forEach(col => {
-        if (col.toLowerCase().includes(filterText)) {
-            visibleCount++;
-            
-            const label = document.createElement('label');
-            label.className = 'custom-checkbox';
-            
-            const input = document.createElement('input');
-            input.type = 'checkbox';
-            input.value = col;
-            input.checked = tempSelectedColumns.has(col);
-            
-            input.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    tempSelectedColumns.add(col);
-                } else {
-                    tempSelectedColumns.delete(col);
-                }
-                updateSelectAllState();
-            });
+    let visibleCount = availableCols.length;
 
-            const spanText = document.createElement('span');
-            spanText.textContent = col;
+    availableCols.forEach(col => {
+        const label = document.createElement('label');
+        label.className = 'custom-checkbox';
+        
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = col;
+        input.checked = tempSelectedColumns.has(col);
+        
+        input.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                tempSelectedColumns.add(col);
+            } else {
+                tempSelectedColumns.delete(col);
+            }
+            updateSelectAllState();
+        });
 
-            label.appendChild(input);
-            label.appendChild(document.createElement('span')); // Checkmark placeholder
-            label.appendChild(spanText);
-            
-            columnListContainer.appendChild(label);
-        }
+        const spanText = document.createElement('span');
+        spanText.textContent = col;
+
+        label.appendChild(input);
+        label.appendChild(document.createElement('span')); // Checkmark placeholder
+        label.appendChild(spanText);
+        
+        columnListContainer.appendChild(label);
     });
 
     visibleColumnsCount.textContent = visibleCount;
@@ -281,7 +311,7 @@ function toggleAllCheckboxes(e) {
     const filterText = columnSearchInput.value.toLowerCase();
     
     allColumns.forEach(col => {
-        if (col.toLowerCase().includes(filterText)) {
+        if (!MANDATORY_COLUMNS.includes(col) && col.toLowerCase().includes(filterText)) {
             if (isChecked) {
                 tempSelectedColumns.add(col);
             } else {
@@ -295,7 +325,7 @@ function toggleAllCheckboxes(e) {
 
 function updateSelectAllState() {
     const filterText = columnSearchInput.value.toLowerCase();
-    const visibleCols = allColumns.filter(c => c.toLowerCase().includes(filterText));
+    const visibleCols = allColumns.filter(c => !MANDATORY_COLUMNS.includes(c) && c.toLowerCase().includes(filterText));
     
     if (visibleCols.length === 0) {
         selectAllCheckbox.checked = false;
@@ -326,15 +356,23 @@ function savePresetFromModal() {
 
     const name = rawName;
     const columnsArray = Array.from(tempSelectedColumns);
+    
+    // Ensure mandatory columns are present at the top
+    const finalColumns = [...MANDATORY_COLUMNS];
+    columnsArray.forEach(col => {
+        if (!MANDATORY_COLUMNS.includes(col)) {
+            finalColumns.push(col);
+        }
+    });
 
-    if (columnsArray.length === 0) {
+    if (finalColumns.length === 0) {
         alert("Devi selezionare almeno una colonna.");
         return;
     }
 
     if (modalMode === 'clone') {
         const newId = 'preset_' + Date.now();
-        presets[newId] = { name: name, columns: columnsArray };
+        presets[newId] = { name: name, columns: finalColumns };
         savePresetsToStorage();
         updatePresetDropdown();
         presetSelect.value = newId;
@@ -342,7 +380,7 @@ function savePresetFromModal() {
     } else if (modalMode === 'edit') {
         if (editingPresetId && presets[editingPresetId]) {
             presets[editingPresetId].name = name;
-            presets[editingPresetId].columns = columnsArray;
+            presets[editingPresetId].columns = finalColumns;
             savePresetsToStorage();
             updatePresetDropdown();
         }
@@ -385,8 +423,8 @@ function importPresets(e) {
         try {
             const imported = JSON.parse(event.target.result);
             if (imported && typeof imported === 'object') {
-                // Merge with existing, keeping base intact
-                presets = { ...presets, ...imported, base: { name: 'Base (Tutte le colonne)', columns: [] } };
+                // Merge with existing, keeping base intact with mandatory columns
+                presets = { ...presets, ...imported, base: { name: 'Vista Base (Solo Essenziali)', columns: [...MANDATORY_COLUMNS] } };
                 savePresetsToStorage();
                 updatePresetDropdown();
                 alert("Preset importati con successo!");
