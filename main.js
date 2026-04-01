@@ -136,7 +136,7 @@ function resetDictionaryToDefault() {
     currentDictionary = {};
     if (typeof DEFAULT_DICTIONARY !== 'undefined') {
         DEFAULT_DICTIONARY.forEach(item => {
-            currentDictionary[item['nome segnale']] = {
+            currentDictionary[item['nome_colonna']] = {
                 alias: item['descrizione_custom'] || '',
                 ordine_custom: item['ordine_custom'] === undefined ? null : item['ordine_custom'],
                 ordine_funzione: item['ordine_funzione'] === undefined ? null : item['ordine_funzione'],
@@ -297,12 +297,13 @@ function generateColumnDefs(presetId) {
         // Apply Custom Alias
         if (currentDictionary[colUpper] && currentDictionary[colUpper].alias) {
             def.headerName = currentDictionary[colUpper].alias;
-            // Add tooltip field for alias to show on hover cleanly
-            def.tooltipValueGetter = () => currentDictionary[colUpper].alias; 
+            // Add headerTooltip for alias
+            def.headerTooltip = currentDictionary[colUpper].alias; 
+            def.tooltipField = col; // Cells show actual row value on hover
         } else if (currentDictionary[col] && currentDictionary[col].alias) {
             def.headerName = currentDictionary[col].alias;
-            // Add tooltip field for alias to show on hover cleanly
-            def.tooltipValueGetter = () => currentDictionary[col].alias; 
+            def.headerTooltip = currentDictionary[col].alias; 
+            def.tooltipField = col; // Cells show actual row value on hover
         } else {
             if (colUpper === 'LONG_DESCRIPTION') def.tooltipField = col;
         }
@@ -548,11 +549,11 @@ function openDictModal() {
 }
 
 function addDictRow() {
-    const newKey = prompt("Inserisci il Nome Segnale ESATTO per cui creare l'alias:");
+    const newKey = prompt("Inserisci il Nome Colonna ESATTO per cui creare l'alias:");
     if (!newKey) return;
     const finalKey = newKey.trim();
     if (currentDictionary[finalKey]) {
-        alert("Questo segnale esiste già nel dizionario!");
+        alert("Questa colonna esiste già nel dizionario!");
         return;
     }
     currentDictionary[finalKey] = {
