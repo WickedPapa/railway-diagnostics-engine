@@ -36,6 +36,16 @@
                         <!-- Dynamic options here -->
                     </select>
                 </div>
+
+                <div class="select-wrapper" style="margin-left: 10px; margin-right: 15px;">
+                    <select id="sortSelect" class="preset-dropdown" title="Ordina Tabella">
+                        <option value="none">Nessun ordine</option>
+                        <option value="ordine_custom">Ordine Custom</option>
+                        <option value="ordine_funzione">Ordine Funzione</option>
+                        <option value="ordine_apparato">Ordine Apparato</option>
+                        <option value="ordine_cabina">Ordine Cabina</option>
+                    </select>
+                </div>
                 
                 <div class="btn-group">
                     <button id="btnClonePreset" class="btn icon-btn" title="Clona Preset / Nuovo da...">
@@ -46,6 +56,10 @@
                     </button>
                     <button id="btnDeletePreset" class="btn icon-btn danger-hover" title="Elimina Preset">
                         🗑
+                    </button>
+                    <div class="separator"></div>
+                    <button id="btnDictionary" class="btn icon-btn" title="Gestore Dizionario (Alias e Ordine)">
+                        📖
                     </button>
                     <div class="separator"></div>
                     <button id="btnExportPresets" class="btn icon-btn" title="Esporta Preset">
@@ -85,6 +99,17 @@
                     <input type="text" id="presetNameInput" placeholder="Es. Vista Dettagliata" class="input-light" autocomplete="off">
                 </div>
 
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="presetSortSelect">Ordine di Default (salvato nel preset)</label>
+                    <select id="presetSortSelect" class="input-light preset-dropdown" style="width: 100%;">
+                        <option value="none">Nessun ordine (usa ordine di selezione)</option>
+                        <option value="ordine_custom">Ordine Custom</option>
+                        <option value="ordine_funzione">Ordine Funzione</option>
+                        <option value="ordine_apparato">Ordine Apparato</option>
+                        <option value="ordine_cabina">Ordine Cabina</option>
+                    </select>
+                </div>
+
                 <div class="columns-selector">
                     <div class="search-box">
                         <input type="text" id="columnSearchInput" placeholder="Cerca tra le colonne..." class="input-light">
@@ -112,6 +137,54 @@
         </div>
     </div>
 
+    <!-- Modal for Dictionary -->
+    <div id="dictionaryModal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width: 1100px;">
+            <div class="modal-header">
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                    Dizionario (Alias & Ordini)
+                </h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="btnExportDict" class="btn icon-btn" title="Esporta Dizionario">⭳</button>
+                    <label for="importDictInput" class="btn icon-btn" title="Importa Dizionario" style="cursor: pointer; margin:0;">⭱</label>
+                    <input type="file" id="importDictInput" accept=".json" style="display: none;">
+                    <button id="btnCloseDictModal" class="btn-close">×</button>
+                </div>
+            </div>
+            
+            <div class="modal-body dict-modal-body">
+                 <div class="search-box">
+                    <input type="text" id="dictSearchInput" placeholder="Cerca Nome Segnale o Alias..." class="input-light dict-search">
+                    <span class="search-icon" style="left: 10px; top: 10px;">🔍</span>
+                </div>
+                <div class="dict-table-wrapper">
+                   <table class="dict-table">
+                       <thead>
+                           <tr>
+                               <th style="width: 25%">Nome Segnale</th>
+                               <th style="width: 25%">Alias (Custom)</th>
+                               <th style="width: 10%">Ord. Custom</th>
+                               <th style="width: 10%">Ord. Funzione</th>
+                               <th style="width: 10%">Ord. Apparato</th>
+                               <th style="width: 10%">Ord. Cabina</th>
+                           </tr>
+                       </thead>
+                       <tbody id="dictTableBody">
+                           <!-- Rows injected via JS -->
+                       </tbody>
+                   </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btnResetDict" class="btn secondary-btn danger-hover" style="margin-right: auto;">Ripristina Originali</button>
+                <button id="btnCancelDictModal" class="btn secondary-btn">Annulla</button>
+                <button id="btnSaveDict" class="btn primary-btn">Salva Modifiche</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="modal-overlay" style="display: none;">
         <div class="loader-content glass-panel" style="width: auto;">
@@ -120,6 +193,8 @@
         </div>
     </div>
 
+    <!-- Data and App scripts -->
+    <script src="dictionary_data.js"></script>
     <script src="main.js"></script>
 </body>
 </html>

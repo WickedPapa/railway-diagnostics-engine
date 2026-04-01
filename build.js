@@ -1,4 +1,6 @@
-// Variabili Globali
+const fs = require('fs');
+
+const code = `// Variabili Globali
 let rawData = [];
 let allColumns = [];
 let gridApi = null;
@@ -284,7 +286,7 @@ function generateColumnDefs(presetId) {
         } else if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO') {
             def.valueFormatter = (params) => {
                 if (params.value && typeof params.value === 'string') {
-                    return params.value.replace(/(.d)d+$/, '$1');
+                    return params.value.replace(/(\.\d)\d+$/, '$1');
                 }
                 return params.value;
             };
@@ -416,7 +418,7 @@ function renderCheckboxes() {
         });
 
         const spanText = document.createElement('span');
-        const alias = (currentDictionary[col] && currentDictionary[col].alias) ? ` (${currentDictionary[col].alias})` : '';
+        const alias = (currentDictionary[col] && currentDictionary[col].alias) ? \` (\${currentDictionary[col].alias})\` : '';
         spanText.textContent = col + alias;
 
         label.appendChild(input);
@@ -526,7 +528,7 @@ function savePresetFromModal() {
 function deleteCurrentPreset() {
     if (currentPresetId === 'base') return;
 
-    if (confirm(`Sei sicuro di voler eliminare il preset "${presets[currentPresetId].name}"?`)) {
+    if (confirm(\`Sei sicuro di voler eliminare il preset "\${presets[currentPresetId].name}"?\`)) {
         delete presets[currentPresetId];
         savePresetsToStorage();
         currentPresetId = 'base';
@@ -561,16 +563,16 @@ function renderDictTable() {
     
     let fragments = [];
     rows.forEach(r => {
-        fragments.push(`
+        fragments.push(\`
             <tr>
-                <td>${r.key}</td>
-                <td><input type="text" class="dict-input" data-field="alias" data-key="${r.key}" value="${r.alias || ''}"></td>
-                <td><input type="number" class="dict-input" data-field="ordine_custom" data-key="${r.key}" value="${r.ordine_custom !== null ? r.ordine_custom : ''}"></td>
-                <td><input type="number" class="dict-input" data-field="ordine_funzione" data-key="${r.key}" value="${r.ordine_funzione !== null ? r.ordine_funzione : ''}"></td>
-                <td><input type="number" class="dict-input" data-field="ordine_apparato" data-key="${r.key}" value="${r.ordine_apparato !== null ? r.ordine_apparato : ''}"></td>
-                <td><input type="number" class="dict-input" data-field="ordine_cabina" data-key="${r.key}" value="${r.ordine_cabina !== null ? r.ordine_cabina : ''}"></td>
+                <td>\${r.key}</td>
+                <td><input type="text" class="dict-input" data-field="alias" data-key="\${r.key}" value="\${r.alias || ''}"></td>
+                <td><input type="number" class="dict-input" data-field="ordine_custom" data-key="\${r.key}" value="\${r.ordine_custom !== null ? r.ordine_custom : ''}"></td>
+                <td><input type="number" class="dict-input" data-field="ordine_funzione" data-key="\${r.key}" value="\${r.ordine_funzione !== null ? r.ordine_funzione : ''}"></td>
+                <td><input type="number" class="dict-input" data-field="ordine_apparato" data-key="\${r.key}" value="\${r.ordine_apparato !== null ? r.ordine_apparato : ''}"></td>
+                <td><input type="number" class="dict-input" data-field="ordine_cabina" data-key="\${r.key}" value="\${r.ordine_cabina !== null ? r.ordine_cabina : ''}"></td>
             </tr>
-        `);
+        \`);
     });
     dictTableBody.innerHTML = fragments.join('');
 }
@@ -663,3 +665,6 @@ function importPresets(e) {
     reader.readAsText(file);
     e.target.value = ''; // Reset input
 }
+`;
+
+fs.writeFileSync('main.js', code);
