@@ -22,6 +22,7 @@ const presetControlsGroup = document.getElementById('presetControlsGroup');
 const btnClone = document.getElementById('btnClonePreset');
 const btnEdit = document.getElementById('btnEditPreset');
 const btnDelete = document.getElementById('btnDeletePreset');
+const btnDeleteAllPresets = document.getElementById('btnDeleteAllPresets');
 const btnDictionary = document.getElementById('btnDictionary');
 const btnExport = document.getElementById('btnExportPresets');
 const importInput = document.getElementById('importPresetInput');
@@ -88,6 +89,7 @@ function initEventListeners() {
     btnClone.addEventListener('click', () => openModal('clone'));
     btnEdit.addEventListener('click', () => openModal('edit'));
     btnDelete.addEventListener('click', deleteCurrentPreset);
+    btnDeleteAllPresets.addEventListener('click', deleteAllPresets);
     btnDictionary.addEventListener('click', openDictModal);
 
     btnExport.addEventListener('click', exportPresets);
@@ -209,7 +211,6 @@ function handleFileUpload(e) {
             if (rawData.length > 0) {
                 allColumns = results.meta.fields || Object.keys(rawData[0]);
                 initAgGrid();
-                presetControlsGroup.classList.remove('disabled-when-empty');
             } else {
                 alert("Il file CSV sembra essere vuoto o non valido.");
                 emptyState.style.display = 'block';
@@ -533,6 +534,24 @@ function deleteCurrentPreset() {
 
     if (confirm(`Sei sicuro di voler eliminare il preset "${presets[currentPresetId].name}"?`)) {
         delete presets[currentPresetId];
+        savePresetsToStorage();
+        currentPresetId = 'base';
+        sortSelect.value = 'none';
+        updatePresetDropdown();
+        applyPresetToGrid();
+    }
+}
+
+function deleteAllPresets() {
+    if (Object.keys(presets).length <= 1) {
+        alert("Non ci sono preset personalizzati da eliminare.");
+        return;
+    }
+    
+    if (confirm("Sei sicuro di voler eliminare TUTTI i preset personalizzati in un colpo solo? L'operazione è irreversibile.")) {
+        presets = {
+            'base': presets['base']
+        };
         savePresetsToStorage();
         currentPresetId = 'base';
         sortSelect.value = 'none';

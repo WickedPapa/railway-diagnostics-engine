@@ -29,7 +29,7 @@
                 <span id="fileNameDisplay" class="file-name">Nessun file selezionato</span>
             </div>
 
-            <div class="preset-controls disabled-when-empty" id="presetControlsGroup">
+            <div class="preset-controls" id="presetControlsGroup">
                 <div class="select-wrapper">
                     <select id="presetSelect" class="preset-dropdown">
                         <option value="base">Base (Tutte le colonne)</option>
@@ -54,8 +54,11 @@
                     <button id="btnEditPreset" class="btn icon-btn" title="Modifica Preset Corrente">
                         ✎
                     </button>
-                    <button id="btnDeletePreset" class="btn icon-btn danger-hover" title="Elimina Preset">
+                    <button id="btnDeletePreset" class="btn icon-btn danger-hover" title="Elimina Preset Corrente">
                         🗑
+                    </button>
+                    <button id="btnDeleteAllPresets" class="btn icon-btn danger-hover" title="Svuota Tutti i Preset Custom">
+                        🔥
                     </button>
                     <div class="separator"></div>
                     <button id="btnDictionary" class="btn icon-btn" title="Gestore Dizionario (Alias e Ordine)">
