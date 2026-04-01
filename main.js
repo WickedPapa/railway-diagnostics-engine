@@ -53,6 +53,7 @@ const btnExportDict = document.getElementById('btnExportDict');
 const importDictInput = document.getElementById('importDictInput');
 const dictSearchInput = document.getElementById('dictSearchInput');
 const dictTableBody = document.getElementById('dictTableBody');
+const btnAddDictRow = document.getElementById('btnAddDictRow');
 
 // Modal state
 let modalMode = 'clone'; // 'clone' or 'edit'
@@ -104,6 +105,7 @@ function initEventListeners() {
     btnCloseDictModal.addEventListener('click', closeDictModal);
     btnCancelDictModal.addEventListener('click', closeDictModal);
     btnSaveDict.addEventListener('click', saveDictChanges);
+    btnAddDictRow.addEventListener('click', addDictRow);
     btnResetDict.addEventListener('click', () => {
         if(confirm("Sei sicuro di voler riportare il dizionario ai valori originali? Verranno perse tutte le modifiche non esportate.")) {
             resetDictionaryToDefault();
@@ -251,7 +253,6 @@ function initAgGrid() {
 }
 
 function getSortOrderValue(colName, sortType) {
-    if (MANDATORY_COLUMNS.includes(colName)) return -1; // Mandatory always first
     if (!currentDictionary[colName] || currentDictionary[colName][sortType] == null) {
         return 999999; // Unordered columns go to the end
     }
@@ -279,28 +280,31 @@ function generateColumnDefs(presetId) {
         let def = { field: col, headerName: col };
         let colUpper = col.toUpperCase();
 
-        if (colUpper === 'VEHICLE') {
-            def.headerName = 'N';
-        } else if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO') {
+        if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO') {
             def.valueFormatter = (params) => {
                 if (params.value && typeof params.value === 'string') {
-                    return params.value.replace(/(.d)d+$/, '$1');
+                    return params.value.replace(/(\.\d)\d+$/, '$1');
                 }
                 return params.value;
             };
         } else if (colUpper === 'LONG_DESCRIPTION') {
             def.width = 200;
-            def.tooltipField = col;
         } else if (colUpper.startsWith('S_')) {
             def.headerClass = 'vertical-header';
             def.width = 60;
         }
 
         // Apply Custom Alias
-        if (!MANDATORY_COLUMNS.includes(colUpper) && currentDictionary[col] && currentDictionary[col].alias) {
+        if (currentDictionary[colUpper] && currentDictionary[colUpper].alias) {
+            def.headerName = currentDictionary[colUpper].alias;
+            // Add tooltip field for alias to show on hover cleanly
+            def.tooltipValueGetter = () => currentDictionary[colUpper].alias; 
+        } else if (currentDictionary[col] && currentDictionary[col].alias) {
             def.headerName = currentDictionary[col].alias;
             // Add tooltip field for alias to show on hover cleanly
             def.tooltipValueGetter = () => currentDictionary[col].alias; 
+        } else {
+            if (colUpper === 'LONG_DESCRIPTION') def.tooltipField = col;
         }
 
         return def;
@@ -541,6 +545,25 @@ function openDictModal() {
     dictSearchInput.value = '';
     renderDictTable();
     dictModal.classList.add('active');
+}
+
+function addDictRow() {
+    const newKey = prompt("Inserisci il Nome Segnale ESATTO per cui creare l'alias:");
+    if (!newKey) return;
+    const finalKey = newKey.trim();
+    if (currentDictionary[finalKey]) {
+        alert("Questo segnale esiste già nel dizionario!");
+        return;
+    }
+    currentDictionary[finalKey] = {
+        alias: "",
+        ordine_custom: null,
+        ordine_funzione: null,
+        ordine_apparato: null,
+        ordine_cabina: null
+    };
+    dictSearchInput.value = finalKey; 
+    renderDictTable();
 }
 
 function closeDictModal() {

@@ -1,5 +1,45 @@
 const DEFAULT_DICTIONARY = [
   {
+    "nome segnale": "VEHICLE",
+    "descrizione_custom": "N",
+    "ordine_custom": 1,
+    "ordine_funzione": 1,
+    "ordine_apparato": 1,
+    "ordine_cabina": 1
+  },
+  {
+    "nome segnale": "TIMESTAMP",
+    "descrizione_custom": "TIMESTAMP",
+    "ordine_custom": 2,
+    "ordine_funzione": 2,
+    "ordine_apparato": 2,
+    "ordine_cabina": 2
+  },
+  {
+    "nome segnale": "TIMESTAMP BORDO",
+    "descrizione_custom": "TIMESTAMP BORDO",
+    "ordine_custom": 3,
+    "ordine_funzione": 3,
+    "ordine_apparato": 3,
+    "ordine_cabina": 3
+  },
+  {
+    "nome segnale": "SOURCE",
+    "descrizione_custom": "SOURCE",
+    "ordine_custom": 4,
+    "ordine_funzione": 4,
+    "ordine_apparato": 4,
+    "ordine_cabina": 4
+  },
+  {
+    "nome segnale": "LONG_DESCRIPTION",
+    "descrizione_custom": "LONG_DESCRIPTION",
+    "ordine_custom": 5,
+    "ordine_funzione": 5,
+    "ordine_apparato": 5,
+    "ordine_cabina": 5
+  },
+  {
     "nome segnale": "S_ACE1_ACE1_IAOIKSTATUS",
     "descrizione_dmms": "Status of the three phases line contactor (1=close",
     "descrizione_custom": "ACE1:Contattore Linea Trifase",
