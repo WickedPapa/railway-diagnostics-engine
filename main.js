@@ -156,6 +156,7 @@ function initAgGrid() {
         columnDefs: generateColumnDefs('base'),
         rowData: rawData,
         headerHeight: 350,
+        enableBrowserTooltips: true,
         defaultColDef: {
             sortable: true,
             filter: true,
@@ -199,6 +200,10 @@ function generateColumnDefs(presetId) {
                 }
                 return params.value;
             };
+        } else if (colUpper === 'LONG_DESCRIPTION') {
+            // About 25 characters width for "108C: Pulsante BANCO..."
+            def.width = 250;
+            def.tooltipField = col;
         } else if (colUpper.startsWith('S_')) {
             def.headerClass = 'vertical-header';
             def.width = 60;
@@ -214,6 +219,20 @@ function applyPresetToGrid() {
     
     const newColDefs = generateColumnDefs(currentPresetId);
     gridApi.setGridOption('columnDefs', newColDefs);
+
+    // Auto-size columns N, timestamp, source to fit content
+    setTimeout(() => {
+        if (!gridApi) return;
+        const colsToAutoSize = newColDefs
+            .map(c => c.field)
+            .filter(c => {
+                const upper = c.toUpperCase();
+                return upper === 'VEHICLE' || upper === 'TIMESTAMP' || upper === 'TIMESTAMP BORDO' || upper === 'SOURCE';
+            });
+        if (colsToAutoSize.length > 0) {
+            gridApi.autoSizeColumns(colsToAutoSize);
+        }
+    }, 150);
 }
 
 
