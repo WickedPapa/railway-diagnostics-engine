@@ -160,6 +160,12 @@ body {
     border-color: var(--text-secondary);
 }
 
+.preset-dropdown option {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    padding: 8px;
+}
+
 .btn-group {
     display: flex;
     gap: 6px;
