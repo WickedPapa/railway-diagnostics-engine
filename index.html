@@ -64,6 +64,9 @@
                     <button id="btnDictionary" class="btn icon-btn" title="Gestore Dizionario (Alias e Ordine)">
                         📖
                     </button>
+                    <button id="btnExclusions" class="btn icon-btn" title="Gestore Esclusioni (Nascondi Colonne)">
+                        🚫
+                    </button>
                     <div class="separator"></div>
                     <button id="btnExportPresets" class="btn icon-btn" title="Esporta Preset">
                         ⭳ Export
@@ -198,7 +201,56 @@
         </div>
     </div>
 
+    <!-- Exclusion Modal -->
+    <div id="exclusionModal" class="modal">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
+                    Colonne Escluse (Blacklist)
+                </h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="btnAddExclusion" class="btn icon-btn" title="Aggiungi Esclusione">➕</button>
+                    <div class="separator"></div>
+                    <button id="btnExportExclusions" class="btn icon-btn" title="Esporta Esclusioni">⭳</button>
+                    <label for="importExclusionsInput" class="btn icon-btn" title="Importa Esclusioni" style="cursor: pointer; margin:0;">⭱</label>
+                    <input type="file" id="importExclusionsInput" accept=".json" style="display: none;">
+                    <button id="btnCloseExclusionModal" class="btn-close">×</button>
+                </div>
+            </div>
+            
+            <div class="modal-body dict-modal-body">
+                 <div class="search-box">
+                    <input type="text" id="exclusionSearchInput" placeholder="Cerca Colonna da Escludere..." class="input-light dict-search">
+                    <span class="search-icon" style="left: 10px; top: 10px;">🔍</span>
+                </div>
+                <div class="dict-table-wrapper">
+                   <table class="dict-table">
+                       <thead>
+                           <tr>
+                               <th style="width: 80%">Nome Colonna</th>
+                               <th style="width: 20%; text-align: center;">Azione</th>
+                           </tr>
+                       </thead>
+                       <tbody id="exclusionTableBody">
+                           <!-- Rows from js -->
+                       </tbody>
+                   </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btnResetExclusions" class="btn secondary">Ripristina Default</button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="btnCancelExclusionModal" class="btn secondary">Rimuovi Modifiche Non Salvate</button>
+                    <button id="btnSaveExclusions" class="btn primary">Salva e Applica</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Data and App scripts -->
+    <script src="exclusion_data.js"></script>
     <script src="dictionary_data.js"></script>
     <script src="main.js"></script>
 </body>

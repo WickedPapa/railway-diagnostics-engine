@@ -1,0 +1,12 @@
+const DEFAULT_EXCLUSIONS = [
+    "THING",
+    "FLEET",
+    "BASELINE",
+    "CUID",
+    "SOURCE_DESCRIPTION",
+    "ITEMS_GROUP",
+    "EVENT_IDA",
+    "SHORT_NAME",
+    "START_TIMESTAMP",
+    "END_TIMESTAMP"
+];

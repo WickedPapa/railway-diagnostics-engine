@@ -4,6 +4,7 @@ let allColumns = [];
 let gridApi = null;
 let currentPresetId = 'base';
 let currentDictionary = {};
+let currentExclusions = [];
 
 const MANDATORY_COLUMNS = ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
 
@@ -24,6 +25,7 @@ const btnEdit = document.getElementById('btnEditPreset');
 const btnDelete = document.getElementById('btnDeletePreset');
 const btnDeleteAllPresets = document.getElementById('btnDeleteAllPresets');
 const btnDictionary = document.getElementById('btnDictionary');
+const btnExclusions = document.getElementById('btnExclusions');
 const btnExport = document.getElementById('btnExportPresets');
 const importInput = document.getElementById('importPresetInput');
 
@@ -56,12 +58,25 @@ const dictSearchInput = document.getElementById('dictSearchInput');
 const dictTableBody = document.getElementById('dictTableBody');
 const btnAddDictRow = document.getElementById('btnAddDictRow');
 
+// Exclusion Modal Elements
+const exclusionModal = document.getElementById('exclusionModal');
+const btnCloseExclusionModal = document.getElementById('btnCloseExclusionModal');
+const btnCancelExclusionModal = document.getElementById('btnCancelExclusionModal');
+const btnSaveExclusions = document.getElementById('btnSaveExclusions');
+const btnResetExclusions = document.getElementById('btnResetExclusions');
+const btnExportExclusions = document.getElementById('btnExportExclusions');
+const importExclusionsInput = document.getElementById('importExclusionsInput');
+const exclusionSearchInput = document.getElementById('exclusionSearchInput');
+const exclusionTableBody = document.getElementById('exclusionTableBody');
+const btnAddExclusion = document.getElementById('btnAddExclusion');
+
 // Modal state
 let modalMode = 'clone'; // 'clone' or 'edit'
 let editingPresetId = null;
 
 // --- Inizializzazione ---
 document.addEventListener('DOMContentLoaded', () => {
+    initExclusions();
     initDictionary();
     loadPresetsFromStorage();
     updatePresetDropdown();
@@ -91,6 +106,7 @@ function initEventListeners() {
     btnDelete.addEventListener('click', deleteCurrentPreset);
     btnDeleteAllPresets.addEventListener('click', deleteAllPresets);
     btnDictionary.addEventListener('click', openDictModal);
+    btnExclusions.addEventListener('click', openExclusionModal);
 
     btnExport.addEventListener('click', exportPresets);
     importInput.addEventListener('change', importPresets);
@@ -118,6 +134,51 @@ function initEventListeners() {
     dictSearchInput.addEventListener('input', renderDictTable);
     btnExportDict.addEventListener('click', exportDictionary);
     importDictInput.addEventListener('change', importDictionary);
+
+    // Exclusion Modal
+    btnCloseExclusionModal.addEventListener('click', closeExclusionModal);
+    btnCancelExclusionModal.addEventListener('click', closeExclusionModal);
+    btnSaveExclusions.addEventListener('click', saveExclusionsChanges);
+    btnAddExclusion.addEventListener('click', addExclusionRow);
+    btnResetExclusions.addEventListener('click', () => {
+        if(confirm("Sei sicuro di voler riportare la blacklist ai valori originali? Verranno perse tutte le esclusioni non esportate.")) {
+            resetExclusionsToDefault();
+            renderExclusionTable();
+            // Optional: You could reload grid if CSV is loaded, but modifying exclusions usually needs a clean reload of allColumns.
+            // We'll reset allColumns if rawData exists:
+            if(rawData.length > 0) reloadAllColumnsFromData();
+        }
+    });
+    exclusionSearchInput.addEventListener('input', renderExclusionTable);
+    btnExportExclusions.addEventListener('click', exportExclusions);
+    importExclusionsInput.addEventListener('change', importExclusions);
+}
+
+// --- Storage Management Exclusions ---
+function initExclusions() {
+    const saved = localStorage.getItem('csvExclusions');
+    if (saved) {
+        try {
+            currentExclusions = JSON.parse(saved);
+            return;
+        } catch (e) {
+            console.error(e);
+        }
+    }
+    resetExclusionsToDefault();
+}
+
+function resetExclusionsToDefault() {
+    if (typeof DEFAULT_EXCLUSIONS !== 'undefined') {
+        currentExclusions = [...DEFAULT_EXCLUSIONS];
+    } else {
+        currentExclusions = [];
+    }
+    saveExclusionsToStorage();
+}
+
+function saveExclusionsToStorage() {
+    localStorage.setItem('csvExclusions', JSON.stringify(currentExclusions));
 }
 
 // --- Storage Management Dictionary ---
@@ -209,7 +270,9 @@ function handleFileUpload(e) {
         complete: function (results) {
             rawData = results.data;
             if (rawData.length > 0) {
-                allColumns = results.meta.fields || Object.keys(rawData[0]);
+                // Apply exclusions immediately upon extracting columns
+                let totalColumns = results.meta.fields || Object.keys(rawData[0]);
+                allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
                 initAgGrid();
             } else {
                 alert("Il file CSV sembra essere vuoto o non valido.");
@@ -706,3 +769,114 @@ function importPresets(e) {
     reader.readAsText(file);
     e.target.value = ''; // Reset input
 }
+
+// --- Exclusion Management ---
+function openExclusionModal() {
+    exclusionSearchInput.value = '';
+    renderExclusionTable();
+    exclusionModal.classList.add('active');
+}
+
+function closeExclusionModal() {
+    exclusionModal.classList.remove('active');
+}
+
+function renderExclusionTable() {
+    const filterText = exclusionSearchInput.value.toLowerCase();
+    exclusionTableBody.innerHTML = '';
+    
+    let rows = [...currentExclusions];
+    rows = rows.filter(r => r.toLowerCase().includes(filterText));
+    rows.sort((a, b) => a.localeCompare(b));
+    
+    let fragments = [];
+    rows.forEach(col => {
+        fragments.push(`
+            <tr>
+                <td>${col}</td>
+                <td style="text-align: center;">
+                    <button class="btn icon-btn danger-hover" onclick="removeExclusionRow('${col}')" title="Rimuovi Esclusione">🗑</button>
+                </td>
+            </tr>
+        `);
+    });
+    exclusionTableBody.innerHTML = fragments.join('');
+}
+
+window.removeExclusionRow = function(colName) {
+    if (confirm(`Sicuro di voler rimuovere '${colName}' dalle esclusioni? Tornerà ad essere visibile nel CSV.`)) {
+        currentExclusions = currentExclusions.filter(c => c !== colName);
+        renderExclusionTable();
+    }
+};
+
+function addExclusionRow() {
+    const newKey = prompt("Inserisci il Nome Colonna ESATTO da escludere:");
+    if (!newKey) return;
+    const finalKey = newKey.trim();
+    if (currentExclusions.includes(finalKey)) {
+        alert("Questa colonna è già tra le esclusioni!");
+        return;
+    }
+    currentExclusions.push(finalKey);
+    exclusionSearchInput.value = finalKey; 
+    renderExclusionTable();
+}
+
+function saveExclusionsChanges() {
+    saveExclusionsToStorage();
+    closeExclusionModal();
+    if (rawData.length > 0) {
+        reloadAllColumnsFromData();
+    }
+}
+
+function reloadAllColumnsFromData() {
+    let totalColumns = Object.keys(rawData[0]);
+    // Safety check if PapaParse populated meta.fields
+    if (rawData.length > 0 && typeof Papa !== 'undefined') {
+        // Unfortunately PapaParse doesn't store the fields string natively inside RAWdata without another pass or using the keys
+        // We'll trust the keys of the first row
+        allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
+        initAgGrid();
+    }
+}
+
+function exportExclusions() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentExclusions, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "exclusions_export.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function importExclusions(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const imported = JSON.parse(event.target.result);
+            if (imported && Array.isArray(imported)) {
+                // Merge unique
+                imported.forEach(col => {
+                    if(!currentExclusions.includes(col)) currentExclusions.push(col);
+                });
+                saveExclusionsToStorage();
+                renderExclusionTable();
+                if (rawData.length > 0) reloadAllColumnsFromData();
+                alert("Esclusioni importate con successo!");
+            } else {
+                alert("Il file non contiene un array valido di esclusioni.");
+            }
+        } catch(err) {
+            alert("Errore durante l'importazione: file non valido.");
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset
+}
+
