@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initEventListeners() {
     fileInput.addEventListener('change', handleFileUpload);
-    
+
     presetSelect.addEventListener('change', (e) => {
         currentPresetId = e.target.value;
         applyPresetToGrid();
@@ -62,7 +62,7 @@ function initEventListeners() {
     btnClone.addEventListener('click', () => openModal('clone'));
     btnEdit.addEventListener('click', () => openModal('edit'));
     btnDelete.addEventListener('click', deleteCurrentPreset);
-    
+
     btnExport.addEventListener('click', exportPresets);
     importInput.addEventListener('change', importPresets);
 
@@ -70,7 +70,7 @@ function initEventListeners() {
     btnCloseModal.addEventListener('click', closeModal);
     btnCancelModal.addEventListener('click', closeModal);
     btnSavePreset.addEventListener('click', savePresetFromModal);
-    
+
     columnSearchInput.addEventListener('input', renderCheckboxes);
     selectAllCheckbox.addEventListener('change', toggleAllCheckboxes);
 }
@@ -129,7 +129,7 @@ function handleFileUpload(e) {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
-        complete: function(results) {
+        complete: function (results) {
             rawData = results.data;
             if (rawData.length > 0) {
                 // Estrae tutte le colonne del CSV dal dizionario keys della prima riga valida
@@ -143,7 +143,7 @@ function handleFileUpload(e) {
             }
             loadingOverlay.style.display = 'none';
         },
-        error: function(error) {
+        error: function (error) {
             loadingOverlay.style.display = 'none';
             alert("Errore durante la lettura del CSV: " + error.message);
             emptyState.style.display = 'block';
@@ -171,10 +171,10 @@ function initAgGrid() {
     if (gridApi) {
         gridApi.destroy();
     }
-    
+
     myGrid.innerHTML = '';
     myGrid.style.display = 'block';
-    
+
     gridApi = agGrid.createGrid(myGrid, gridOptions);
     applyPresetToGrid();
 }
@@ -187,9 +187,9 @@ function generateColumnDefs(presetId) {
 
     return colsToShow.map(col => {
         let def = { field: col, headerName: col };
-        
+
         let colUpper = col.toUpperCase();
-        
+
         if (colUpper === 'VEHICLE') {
             def.headerName = 'N';
         } else if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO') {
@@ -202,7 +202,7 @@ function generateColumnDefs(presetId) {
             };
         } else if (colUpper === 'LONG_DESCRIPTION') {
             // About 25 characters width for "108C: Pulsante BANCO..."
-            def.width = 250;
+            def.width = 200;
             def.tooltipField = col;
         } else if (colUpper.startsWith('S_')) {
             def.headerClass = 'vertical-header';
@@ -216,7 +216,7 @@ function generateColumnDefs(presetId) {
 function applyPresetToGrid() {
     if (!gridApi) return;
     updateActionButtonsState();
-    
+
     const newColDefs = generateColumnDefs(currentPresetId);
     gridApi.setGridOption('columnDefs', newColDefs);
 
@@ -253,7 +253,7 @@ function openModal(mode) {
         const titleSuffix = currentPresetId === 'base' ? "Nuova Vista" : presets[currentPresetId].name + " - Copia";
         modalTitle.textContent = "Crea Nuovo Preset (Da: " + presets[currentPresetId].name + ")";
         presetNameInput.value = titleSuffix;
-        
+
         // Populate temp selection from current preset
         const currentCols = presets[currentPresetId].columns;
         currentCols.forEach(col => tempSelectedColumns.add(col));
@@ -263,7 +263,7 @@ function openModal(mode) {
         editingPresetId = currentPresetId;
         modalTitle.textContent = "Modifica Preset: " + presets[currentPresetId].name;
         presetNameInput.value = presets[currentPresetId].name;
-        
+
         presets[currentPresetId].columns.forEach(col => tempSelectedColumns.add(col));
     }
 
@@ -278,10 +278,10 @@ function closeModal() {
 function renderCheckboxes() {
     const filterText = columnSearchInput.value.toLowerCase();
     columnListContainer.innerHTML = '';
-    
+
     // Filter out mandatory columns and apply text filter
     let availableCols = allColumns.filter(c => !MANDATORY_COLUMNS.includes(c) && c.toLowerCase().includes(filterText));
-    
+
     // Sort so selected are grouped at the top
     availableCols.sort((a, b) => {
         const aSelected = tempSelectedColumns.has(a);
@@ -296,12 +296,12 @@ function renderCheckboxes() {
     availableCols.forEach(col => {
         const label = document.createElement('label');
         label.className = 'custom-checkbox';
-        
+
         const input = document.createElement('input');
         input.type = 'checkbox';
         input.value = col;
         input.checked = tempSelectedColumns.has(col);
-        
+
         input.addEventListener('change', (e) => {
             if (e.target.checked) {
                 tempSelectedColumns.add(col);
@@ -317,7 +317,7 @@ function renderCheckboxes() {
         label.appendChild(input);
         label.appendChild(document.createElement('span')); // Checkmark placeholder
         label.appendChild(spanText);
-        
+
         columnListContainer.appendChild(label);
     });
 
@@ -328,7 +328,7 @@ function renderCheckboxes() {
 function toggleAllCheckboxes(e) {
     const isChecked = e.target.checked;
     const filterText = columnSearchInput.value.toLowerCase();
-    
+
     allColumns.forEach(col => {
         if (!MANDATORY_COLUMNS.includes(col) && col.toLowerCase().includes(filterText)) {
             if (isChecked) {
@@ -338,14 +338,14 @@ function toggleAllCheckboxes(e) {
             }
         }
     });
-    
+
     renderCheckboxes();
 }
 
 function updateSelectAllState() {
     const filterText = columnSearchInput.value.toLowerCase();
     const visibleCols = allColumns.filter(c => !MANDATORY_COLUMNS.includes(c) && c.toLowerCase().includes(filterText));
-    
+
     if (visibleCols.length === 0) {
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = false;
@@ -353,7 +353,7 @@ function updateSelectAllState() {
     }
 
     const selectedVisibleCount = visibleCols.filter(c => tempSelectedColumns.has(c)).length;
-    
+
     if (selectedVisibleCount === 0) {
         selectAllCheckbox.checked = false;
         selectAllCheckbox.indeterminate = false;
@@ -375,7 +375,7 @@ function savePresetFromModal() {
 
     const name = rawName;
     const columnsArray = Array.from(tempSelectedColumns);
-    
+
     // Ensure mandatory columns are present at the top
     const finalColumns = [...MANDATORY_COLUMNS];
     columnsArray.forEach(col => {
@@ -411,7 +411,7 @@ function savePresetFromModal() {
 
 function deleteCurrentPreset() {
     if (currentPresetId === 'base') return;
-    
+
     if (confirm(`Sei sicuro di voler eliminare il preset "${presets[currentPresetId].name}"?`)) {
         delete presets[currentPresetId];
         savePresetsToStorage();
@@ -426,7 +426,7 @@ function deleteCurrentPreset() {
 function exportPresets() {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(presets));
     const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("href", dataStr);
     downloadAnchorNode.setAttribute("download", "csv_presets_export.json");
     document.body.appendChild(downloadAnchorNode); // required for firefox
     downloadAnchorNode.click();
@@ -438,7 +438,7 @@ function importPresets(e) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         try {
             const imported = JSON.parse(event.target.result);
             if (imported && typeof imported === 'object') {
@@ -448,7 +448,7 @@ function importPresets(e) {
                 updatePresetDropdown();
                 alert("Preset importati con successo!");
             }
-        } catch(err) {
+        } catch (err) {
             alert("Errore durante l'importazione: file non valido.");
         }
     };
