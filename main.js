@@ -390,18 +390,24 @@ function generateColumnDefs(presetId) {
             def.width = 60;
             def.cellClassRules = {
                 'highlight-change': (params) => {
-                    if (!highlightChanges) return false;
-                    const rowIndex = params.node.rowIndex;
-                    if (rowIndex === 0 || rowIndex === null || rowIndex === undefined) return false;
-                    
-                    const prevNode = params.api.getDisplayedRowAtIndex(rowIndex - 1);
-                    if (!prevNode) return false;
-                    
-                    const field = params.colDef.field;
-                    const currentVal = params.value;
-                    const prevVal = params.api.getValue(field, prevNode);
-                    
-                    return currentVal !== prevVal;
+                    try {
+                        if (!highlightChanges || !params.node || typeof params.node.rowIndex !== 'number' || params.node.rowIndex === 0) return false;
+                        
+                        const prevNode = params.api.getDisplayedRowAtIndex(params.node.rowIndex - 1);
+                        if (!prevNode || !prevNode.data) return false;
+                        
+                        const field = params.colDef.field;
+                        let currentVal = params.value;
+                        let prevVal = prevNode.data[field];
+                        
+                        if (currentVal === "") currentVal = null;
+                        if (prevVal === "") prevVal = null;
+                        
+                        return currentVal != prevVal;
+                    } catch (e) {
+                        console.error("Error in cellClassRules:", e);
+                        return false;
+                    }
                 }
             };
         }
