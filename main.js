@@ -81,6 +81,13 @@ let editingPresetId = null;
 
 // --- Inizializzazione ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Applica il titolo configurato
+    if (typeof CONFIG !== 'undefined' && CONFIG.APP_TITLE) {
+        document.title = CONFIG.APP_TITLE;
+        const mainTitle = document.querySelector('h1');
+        if (mainTitle) mainTitle.textContent = CONFIG.APP_TITLE;
+    }
+
     initExclusions();
     initDictionary();
     loadPresetsFromStorage();

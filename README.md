@@ -1,28 +1,34 @@
-# CSV Explorer - Preset Manager
+# Railway Diagnostics Engine / CSV Preset Manager
 
 ## Descrizione
-Un'applicazione web per gestire ed esplorare file CSV, pensata per agevolare l'analisi di dataset complessi con centinaia di colonne. Lo strumento permette di creare **preset personalizzati** per la visualizzazione delle colonne, in modo da filtrare solo i dati necessari e semplificare l'esplorazione.
+Un'applicazione web avanzata e scalabile per gestire ed esplorare file CSV complessi, originariamente pensata per l'analisi diagnostica ferroviaria e dataset con centinaia di colonne. Lo strumento si basa sul concetto di **Preset e Dizionari** per filtrare le informazioni, rinominare colonne tramite alias e ordinarle secondo logiche personalizzate, garantendo alte prestazioni nel rendering tramite AG Grid.
 
 ## Funzionalità Principali
-- **Caricamento CSV Client-Side:** Parsing rapido interamente nel browser tramite *PapaParse*, senza necessità di inviare i dati a un server.
-- **Gestione Avanzata Preset:**
-  - Creazione, modifica ed eliminazione di preset di colonne.
-  - Clonazione di preset esistenti per derivarne di nuovi più facilmente.
-  - Importazione ed esportazione dei preset in formato JSON per condividerli o farne backup.
-- **Tabella Interattiva Dati:** Rendering ad alte prestazioni tramite *AG Grid*, con supporto per ordinamento, ridimensionamento e visualizzazione di grandi moli di dati.
-- **Interfaccia Utente Moderna:** Design curato con effetti "glassmorphism", feedback visivi, animazioni e tema scuro adatto per lunghe sessioni di analisi e monitoraggio dati.
+- **Caricamento Client-Side (Zero-Server):** Parsing massiccio e rapido tramite *PapaParse*, tutto interamente nel browser. Nessun dato lascia il tuo computer, garantendo la privacy e superando i limiti di caricamento.
+- **Configurazione Globale (`config.js`):** Modularità completa. Titolo dell'applicazione modificabile (`APP_TITLE`), colonne lockate e obbligatorie (`MANDATORY_COLUMNS`) ed evidenziazione dei cambiamenti (`DEFAULT_HIGHLIGHT_CHANGES`) tutto governato dal file `config.js`.
+- **Gestore Dizionario (Alias e Ordinamento):**
+  - Mappatura personalizzata tra il nome "grezzo" della colonna e un alias più leggibile (Tooltips intuitivi nell'header).
+  - Ordinamenti multipli preimpostati (Es: Ordine Custom, Ordine Funzione, Ordine Apparato, Ordine Cabina).
+- **Gestore Preset Visivi:**
+  - Creazione, clonazione, modifica e e cancellazione di visti dati specializzati.
+  - Assegnazione di un ordinamento di default ad ogni preset creato.
+- **Gestore Blacklist (Esclusioni):** Nascondi in modo definitivo le colonne "rumorose" tramite un gestore di esclusioni dedicato, riducendo l'elenco delle variabili da gestire.
+- **Importazione ed Esportazione:** Qualsiasi metadato creato (Preset, Dizionario, Blacklist) può essere esportato come file `JSON` e reimportato successivamente per garantire uniformità tra più operatori. Salva in automatico su `localStorage`.
+- **Render Dati ad Alte Prestazioni:** Gestione affidata a *AG Grid*, con tooltips delle celle, filtri e ordinamento nativo e **highlight intelligente** della cella se il dato è variato rispetto al record precedente.
 
 ## Come Iniziare (Utilizzo)
-Essendo un'applicazione statica "zero-build", non è necessario alcun processo di installazione.
-1. Clona o scarica il repository.
-2. Apri il file `index.html` all'interno di un qualsiasi browser web moderno.
-3. Clicca su **"Carica CSV"** e seleziona un file dati.
-4. Usa i comandi sulla destra per creare un **Nuovo Preset**, scegliendo solo le colonne di tuo interesse.
-5. Usa i pulsanti di Import/Export per lo scambio di configurazioni o basati semplicemente sul salvataggio automatico locale (tramite `localStorage`).
+L'applicazione è puramente statica (Vanilla HTML/CSS/JS).
+1. Configura a tuo piacimento il file `config.js` (es. Titolo Applicazione).
+2. Apri il file `index.html` all'interno di qualsiasi browser moderno (Chrome, Edge, Firefox).
+3. Clicca su **"Carica CSV"** e seleziona il tuo file.
+4. Utilizza i tasti rapidi:
+   - 📖 **Dizionario**: per tradurre nomi colonne e assegnare pesi di ordinamento.
+   - 🚫 **Esclusioni**: per inserire voci in blacklist globale.
+   - **Nuovo Preset**: per creare viste per specifiche analisi di tracciati.
+   - **JSON Import/Export**: per precaricare configurazioni.
 
-## Specifiche Tecniche e Librerie
-Il progetto è sviluppato esclusivamente utilizzando tecnologie web standard per garantire la massima portabilità. Le librerie utilizzate sono incluse localmente nella cartella `libs/`:
-- **HTML5 & Vanilla CSS**
-- **Vanilla JavaScript (ES6+)**
-- [AG Grid Community](https://www.ag-grid.com/) (`libs/ag-grid-community.min.js`)
-- [PapaParse](https://www.papaparse.com/) (`libs/papaparse.min.js`)
+## Architettura e Librerie
+Nessuna *build step* necessaria. Tutti i CSS/JS dipendenti sono allocati staticamente in `/libs`.
+- **Tecnologie core:** HTML5, CSS3, DOM ES6+ Vanilla
+- **Ag Grid Community** (`/libs/ag-grid-community.min.js`)
+- **PapaParse** (`/libs/papaparse.min.js`)
