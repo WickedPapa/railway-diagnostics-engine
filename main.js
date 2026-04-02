@@ -9,7 +9,9 @@ let truncateDesc = false;
 let highlightChanges = (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_HIGHLIGHT_CHANGES !== undefined) ? CONFIG.DEFAULT_HIGHLIGHT_CHANGES : true;
 let currentExclusions = [];
 
-const MANDATORY_COLUMNS = ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
+const MANDATORY_COLUMNS = (typeof CONFIG !== 'undefined' && CONFIG.MANDATORY_COLUMNS) 
+    ? CONFIG.MANDATORY_COLUMNS 
+    : ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
 
 // Struttura Presets: { id : { name: string, columns: string[], defaultSortOrder: string } }
 let presets = {
