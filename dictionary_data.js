@@ -1,19 +1,35 @@
 const DEFAULT_DICTIONARY = [
   {
     "nome_colonna": "VEHICLE",
-    "descrizione_custom": "N"
+    "descrizione_custom": "N",
+    "ordine_custom": 1,
+    "ordine_funzione": 1,
+    "ordine_apparato": 1,
+    "ordine_cabina": 1
   },
   {
     "nome_colonna": "TIMESTAMP",
-    "descrizione_custom": "TIMESTAMP"
+    "descrizione_custom": "TIMESTAMP",
+    "ordine_custom": 2,
+    "ordine_funzione": 2,
+    "ordine_apparato": 2,
+    "ordine_cabina": 2
   },
   {
     "nome_colonna": "SOURCE",
-    "descrizione_custom": "SORGENTE"
+    "descrizione_custom": "SORGENTE",
+    "ordine_custom": 3,
+    "ordine_funzione": 3,
+    "ordine_apparato": 3,
+    "ordine_cabina": 3
   },
   {
     "nome_colonna": "LONG_DESCRIPTION",
-    "descrizione_custom": "DESCRIZIONE"
+    "descrizione_custom": "DESCRIZIONE",
+    "ordine_custom": 4,
+    "ordine_funzione": 4,
+    "ordine_apparato": 4,
+    "ordine_cabina": 4
   },
   {
     "nome_colonna": "S_ACE1_ACE1_IAOIKSTATUS",
