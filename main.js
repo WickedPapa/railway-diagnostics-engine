@@ -6,6 +6,7 @@ let gridApi = null;
 let currentPresetId = 'base';
 let currentDictionary = {};
 let truncateDesc = false;
+let highlightChanges = true;
 let currentExclusions = [];
 
 const MANDATORY_COLUMNS = ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
@@ -108,6 +109,16 @@ function initEventListeners() {
         chkTruncateDesc.addEventListener('change', (e) => {
             truncateDesc = e.target.checked;
             applyPresetToGrid();
+        });
+    }
+
+    const chkHighlightChanges = document.getElementById('chkHighlightChanges');
+    if (chkHighlightChanges) {
+        chkHighlightChanges.addEventListener('change', (e) => {
+            highlightChanges = e.target.checked;
+            if (gridApi) {
+                gridApi.redrawRows();
+            }
         });
     }
 
@@ -377,6 +388,22 @@ function generateColumnDefs(presetId) {
         } else if (colUpper.startsWith('S_')) {
             def.headerClass = 'vertical-header';
             def.width = 60;
+            def.cellClassRules = {
+                'highlight-change': (params) => {
+                    if (!highlightChanges) return false;
+                    const rowIndex = params.node.rowIndex;
+                    if (rowIndex === 0 || rowIndex === null || rowIndex === undefined) return false;
+                    
+                    const prevNode = params.api.getDisplayedRowAtIndex(rowIndex - 1);
+                    if (!prevNode) return false;
+                    
+                    const field = params.colDef.field;
+                    const currentVal = params.value;
+                    const prevVal = params.api.getValue(field, prevNode);
+                    
+                    return currentVal !== prevVal;
+                }
+            };
         }
 
         // Apply Custom Alias

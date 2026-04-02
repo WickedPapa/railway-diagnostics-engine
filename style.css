@@ -540,3 +540,9 @@ body {
     border-color: var(--accent-color);
 }
 
+/* Highlight cell variation */
+.highlight-change {
+    background-color: rgba(255, 152, 0, 0.4) !important; /* Orange background */
+    color: #fff !important;
+    font-weight: 600;
+}
