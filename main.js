@@ -1,5 +1,6 @@
 // Variabili Globali
 let rawData = [];
+let secondaryHeaders = {};
 let allColumns = [];
 let gridApi = null;
 let currentPresetId = 'base';
@@ -268,13 +269,15 @@ function handleFileUpload(e) {
         dynamicTyping: true,
         skipEmptyLines: true,
         complete: function (results) {
-            rawData = results.data;
-            if (rawData.length > 0) {
+            if (results.data.length > 0) {
+                secondaryHeaders = results.data[0];
+                rawData = results.data.slice(1);
                 // Apply exclusions immediately upon extracting columns
                 let totalColumns = results.meta.fields || Object.keys(rawData[0]);
                 allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
                 initAgGrid();
             } else {
+                rawData = [];
                 alert("Il file CSV sembra essere vuoto o non valido.");
                 emptyState.style.display = 'block';
             }
@@ -361,14 +364,15 @@ function generateColumnDefs(presetId) {
         // Apply Custom Alias
         if (currentDictionary[colUpper] && currentDictionary[colUpper].alias) {
             def.headerName = currentDictionary[colUpper].alias;
-            // Add headerTooltip for alias
-            def.headerTooltip = currentDictionary[colUpper].alias; 
+            // Add headerTooltip for original name and secondary header
+            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim(); 
             def.tooltipField = col; // Cells show actual row value on hover
         } else if (currentDictionary[col] && currentDictionary[col].alias) {
             def.headerName = currentDictionary[col].alias;
-            def.headerTooltip = currentDictionary[col].alias; 
+            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim(); 
             def.tooltipField = col; // Cells show actual row value on hover
         } else {
+            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim(); 
             if (colUpper === 'LONG_DESCRIPTION') def.tooltipField = col;
         }
 
