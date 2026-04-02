@@ -5,6 +5,7 @@ let allColumns = [];
 let gridApi = null;
 let currentPresetId = 'base';
 let currentDictionary = {};
+let truncateDesc = false;
 let currentExclusions = [];
 
 const MANDATORY_COLUMNS = ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
@@ -102,6 +103,14 @@ function initEventListeners() {
         applyPresetToGrid();
     });
 
+    const chkTruncateDesc = document.getElementById('chkTruncateDesc');
+    if (chkTruncateDesc) {
+        chkTruncateDesc.addEventListener('change', (e) => {
+            truncateDesc = e.target.checked;
+            applyPresetToGrid();
+        });
+    }
+
     btnClone.addEventListener('click', () => openModal('clone'));
     btnEdit.addEventListener('click', () => openModal('edit'));
     btnDelete.addEventListener('click', deleteCurrentPreset);
@@ -126,7 +135,7 @@ function initEventListeners() {
     btnSaveDict.addEventListener('click', saveDictChanges);
     btnAddDictRow.addEventListener('click', addDictRow);
     btnResetDict.addEventListener('click', () => {
-        if(confirm("Sei sicuro di voler riportare il dizionario ai valori originali? Verranno perse tutte le modifiche non esportate.")) {
+        if (confirm("Sei sicuro di voler riportare il dizionario ai valori originali? Verranno perse tutte le modifiche non esportate.")) {
             resetDictionaryToDefault();
             renderDictTable();
             applyPresetToGrid();
@@ -142,12 +151,12 @@ function initEventListeners() {
     btnSaveExclusions.addEventListener('click', saveExclusionsChanges);
     btnAddExclusion.addEventListener('click', addExclusionRow);
     btnResetExclusions.addEventListener('click', () => {
-        if(confirm("Sei sicuro di voler riportare la blacklist ai valori originali? Verranno perse tutte le esclusioni non esportate.")) {
+        if (confirm("Sei sicuro di voler riportare la blacklist ai valori originali? Verranno perse tutte le esclusioni non esportate.")) {
             resetExclusionsToDefault();
             renderExclusionTable();
             // Optional: You could reload grid if CSV is loaded, but modifying exclusions usually needs a clean reload of allColumns.
             // We'll reset allColumns if rawData exists:
-            if(rawData.length > 0) reloadAllColumnsFromData();
+            if (rawData.length > 0) reloadAllColumnsFromData();
         }
     });
     exclusionSearchInput.addEventListener('input', renderExclusionTable);
@@ -356,6 +365,15 @@ function generateColumnDefs(presetId) {
             };
         } else if (colUpper === 'LONG_DESCRIPTION') {
             def.width = 200;
+            def.valueFormatter = (params) => {
+                if (params.value && typeof params.value === 'string' && truncateDesc) {
+                    const dashIndex = params.value.indexOf(' - ');
+                    if (dashIndex !== -1) {
+                        return params.value.substring(0, dashIndex).trim();
+                    }
+                }
+                return params.value;
+            };
         } else if (colUpper.startsWith('S_')) {
             def.headerClass = 'vertical-header';
             def.width = 60;
@@ -365,14 +383,14 @@ function generateColumnDefs(presetId) {
         if (currentDictionary[colUpper] && currentDictionary[colUpper].alias) {
             def.headerName = currentDictionary[colUpper].alias;
             // Add headerTooltip for original name and secondary header
-            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim(); 
+            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim();
             def.tooltipField = col; // Cells show actual row value on hover
         } else if (currentDictionary[col] && currentDictionary[col].alias) {
             def.headerName = currentDictionary[col].alias;
-            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim(); 
+            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim();
             def.tooltipField = col; // Cells show actual row value on hover
         } else {
-            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim(); 
+            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim();
             if (colUpper === 'LONG_DESCRIPTION') def.tooltipField = col;
         }
 
@@ -448,20 +466,20 @@ function renderCheckboxes() {
     columnListContainer.innerHTML = '';
 
     let availableCols = allColumns.filter(c => !MANDATORY_COLUMNS.includes(c));
-    
+
     // Sort logic for the display list inside the modal to show selected items first, then alphabetically
     availableCols.sort((a, b) => {
         const aSelected = tempSelectedColumns.has(a);
         const bSelected = tempSelectedColumns.has(b);
         if (aSelected && !bSelected) return -1;
         if (!aSelected && bSelected) return 1;
-        
+
         // Show by alias if it exists
         const aName = (currentDictionary[a] && currentDictionary[a].alias) ? currentDictionary[a].alias : a;
         const bName = (currentDictionary[b] && currentDictionary[b].alias) ? currentDictionary[b].alias : b;
         return aName.localeCompare(bName);
     });
-    
+
     // Apply visual filter
     availableCols = availableCols.filter(c => {
         const aName = (currentDictionary[c] && currentDictionary[c].alias) ? currentDictionary[c].alias : c;
@@ -509,14 +527,14 @@ function toggleAllCheckboxes(e) {
 
     allColumns.forEach(col => {
         if (!MANDATORY_COLUMNS.includes(col)) {
-             const aName = (currentDictionary[col] && currentDictionary[col].alias) ? currentDictionary[col].alias : col;
-             if(col.toLowerCase().includes(filterText) || aName.toLowerCase().includes(filterText)){
+            const aName = (currentDictionary[col] && currentDictionary[col].alias) ? currentDictionary[col].alias : col;
+            if (col.toLowerCase().includes(filterText) || aName.toLowerCase().includes(filterText)) {
                 if (isChecked) {
                     tempSelectedColumns.add(col);
                 } else {
                     tempSelectedColumns.delete(col);
                 }
-             }
+            }
         }
     });
 
@@ -526,8 +544,8 @@ function toggleAllCheckboxes(e) {
 function updateSelectAllState() {
     const filterText = columnSearchInput.value.toLowerCase();
     const visibleCols = allColumns.filter(c => !MANDATORY_COLUMNS.includes(c)).filter(c => {
-         const aName = (currentDictionary[c] && currentDictionary[c].alias) ? currentDictionary[c].alias : c;
-         return c.toLowerCase().includes(filterText) || aName.toLowerCase().includes(filterText);
+        const aName = (currentDictionary[c] && currentDictionary[c].alias) ? currentDictionary[c].alias : c;
+        return c.toLowerCase().includes(filterText) || aName.toLowerCase().includes(filterText);
     });
 
     if (visibleCols.length === 0) {
@@ -560,7 +578,7 @@ function savePresetFromModal() {
     const name = rawName;
     const columnsArray = Array.from(tempSelectedColumns);
     const orderSelection = presetSortSelect.value;
-    
+
     const finalColumns = [...MANDATORY_COLUMNS];
     columnsArray.forEach(col => {
         if (!MANDATORY_COLUMNS.includes(col)) {
@@ -614,7 +632,7 @@ function deleteAllPresets() {
         alert("Non ci sono preset personalizzati da eliminare.");
         return;
     }
-    
+
     if (confirm("Sei sicuro di voler eliminare TUTTI i preset personalizzati in un colpo solo? L'operazione è irreversibile.")) {
         presets = {
             'base': presets['base']
@@ -649,7 +667,7 @@ function addDictRow() {
         ordine_apparato: null,
         ordine_cabina: null
     };
-    dictSearchInput.value = finalKey; 
+    dictSearchInput.value = finalKey;
     renderDictTable();
 }
 
@@ -660,15 +678,15 @@ function closeDictModal() {
 function renderDictTable() {
     const filterText = dictSearchInput.value.toLowerCase();
     dictTableBody.innerHTML = '';
-    
+
     let rows = Object.keys(currentDictionary).map(key => {
         return { key, ...currentDictionary[key] };
     });
-    
+
     rows = rows.filter(r => r.key.toLowerCase().includes(filterText) || (r.alias && r.alias.toLowerCase().includes(filterText)));
-    
+
     rows.sort((a, b) => a.key.localeCompare(b.key));
-    
+
     let fragments = [];
     rows.forEach(r => {
         fragments.push(`
@@ -691,18 +709,18 @@ function saveDictChanges() {
         const key = input.getAttribute('data-key');
         const field = input.getAttribute('data-field');
         let val = input.value.trim();
-        
+
         if (field.startsWith('ordine_')) {
-             // Handle numbers
-             if (val === '') val = null;
-             else val = parseInt(val, 10);
+            // Handle numbers
+            if (val === '') val = null;
+            else val = parseInt(val, 10);
         }
-        
+
         if (currentDictionary[key]) {
             currentDictionary[key][field] = val;
         }
     });
-    
+
     saveDictionaryToStorage();
     closeDictModal();
     applyPresetToGrid(); // Refresh header names with aliases dynamically
@@ -723,7 +741,7 @@ function importDictionary(e) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         try {
             const imported = JSON.parse(event.target.result);
             if (imported && typeof imported === 'object') {
@@ -733,7 +751,7 @@ function importDictionary(e) {
                 applyPresetToGrid();
                 alert("Dizionario importato con successo!");
             }
-        } catch(err) {
+        } catch (err) {
             alert("Errore durante l'importazione: file non valido.");
         }
     };
@@ -788,11 +806,11 @@ function closeExclusionModal() {
 function renderExclusionTable() {
     const filterText = exclusionSearchInput.value.toLowerCase();
     exclusionTableBody.innerHTML = '';
-    
+
     let rows = [...currentExclusions];
     rows = rows.filter(r => r.toLowerCase().includes(filterText));
     rows.sort((a, b) => a.localeCompare(b));
-    
+
     let fragments = [];
     rows.forEach(col => {
         fragments.push(`
@@ -807,7 +825,7 @@ function renderExclusionTable() {
     exclusionTableBody.innerHTML = fragments.join('');
 }
 
-window.removeExclusionRow = function(colName) {
+window.removeExclusionRow = function (colName) {
     if (confirm(`Sicuro di voler rimuovere '${colName}' dalle esclusioni? Tornerà ad essere visibile nel CSV.`)) {
         currentExclusions = currentExclusions.filter(c => c !== colName);
         renderExclusionTable();
@@ -823,7 +841,7 @@ function addExclusionRow() {
         return;
     }
     currentExclusions.push(finalKey);
-    exclusionSearchInput.value = finalKey; 
+    exclusionSearchInput.value = finalKey;
     renderExclusionTable();
 }
 
@@ -861,13 +879,13 @@ function importExclusions(e) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(event) {
+    reader.onload = function (event) {
         try {
             const imported = JSON.parse(event.target.result);
             if (imported && Array.isArray(imported)) {
                 // Merge unique
                 imported.forEach(col => {
-                    if(!currentExclusions.includes(col)) currentExclusions.push(col);
+                    if (!currentExclusions.includes(col)) currentExclusions.push(col);
                 });
                 saveExclusionsToStorage();
                 renderExclusionTable();
@@ -876,7 +894,7 @@ function importExclusions(e) {
             } else {
                 alert("Il file non contiene un array valido di esclusioni.");
             }
-        } catch(err) {
+        } catch (err) {
             alert("Errore durante l'importazione: file non valido.");
         }
     };
