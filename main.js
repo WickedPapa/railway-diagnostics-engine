@@ -6,7 +6,7 @@ let gridApi = null;
 let currentPresetId = 'base';
 let currentDictionary = {};
 let truncateDesc = false;
-let highlightChanges = true;
+let highlightChanges = (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_HIGHLIGHT_CHANGES !== undefined) ? CONFIG.DEFAULT_HIGHLIGHT_CHANGES : true;
 let currentExclusions = [];
 
 const MANDATORY_COLUMNS = ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
@@ -114,6 +114,7 @@ function initEventListeners() {
 
     const chkHighlightChanges = document.getElementById('chkHighlightChanges');
     if (chkHighlightChanges) {
+        chkHighlightChanges.checked = highlightChanges;
         chkHighlightChanges.addEventListener('change', (e) => {
             highlightChanges = e.target.checked;
             if (gridApi) {
