@@ -202,7 +202,7 @@
     </div>
 
     <!-- Exclusion Modal -->
-    <div id="exclusionModal" class="modal">
+    <div id="exclusionModal" class="modal-overlay">
         <div class="modal-content glass-panel" style="max-width: 600px;">
             <div class="modal-header">
                 <h2 style="display: flex; align-items: center; gap: 10px;">
@@ -240,11 +240,9 @@
             </div>
 
             <div class="modal-footer">
-                <button id="btnResetExclusions" class="btn secondary">Ripristina Default</button>
-                <div style="display: flex; gap: 10px;">
-                    <button id="btnCancelExclusionModal" class="btn secondary">Rimuovi Modifiche Non Salvate</button>
-                    <button id="btnSaveExclusions" class="btn primary">Salva e Applica</button>
-                </div>
+                <button id="btnResetExclusions" class="btn secondary-btn danger-hover" style="margin-right: auto;">Ripristina Default</button>
+                <button id="btnCancelExclusionModal" class="btn secondary-btn">Annulla</button>
+                <button id="btnSaveExclusions" class="btn primary-btn">Salva e Applica</button>
             </div>
         </div>
     </div>
