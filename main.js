@@ -393,17 +393,17 @@ function generateColumnDefs(presetId) {
                 'highlight-change': (params) => {
                     try {
                         if (!highlightChanges || !params.node || typeof params.node.rowIndex !== 'number' || params.node.rowIndex === 0) return false;
-                        
+
                         const prevNode = params.api.getDisplayedRowAtIndex(params.node.rowIndex - 1);
                         if (!prevNode || !prevNode.data) return false;
-                        
+
                         const field = params.colDef.field;
                         let currentVal = params.value;
                         let prevVal = prevNode.data[field];
-                        
+
                         if (currentVal === "") currentVal = null;
                         if (prevVal === "") prevVal = null;
-                        
+
                         return currentVal != prevVal;
                     } catch (e) {
                         console.error("Error in cellClassRules:", e);
@@ -414,17 +414,22 @@ function generateColumnDefs(presetId) {
         }
 
         // Apply Custom Alias
-        if (currentDictionary[colUpper] && currentDictionary[colUpper].alias) {
-            def.headerName = currentDictionary[colUpper].alias;
-            // Add headerTooltip for original name and secondary header
-            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim();
+        def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim();
+
+        let customAlias = (currentDictionary[colUpper] && currentDictionary[colUpper].alias) ? currentDictionary[colUpper].alias :
+            ((currentDictionary[col] && currentDictionary[col].alias) ? currentDictionary[col].alias : null);
+
+        let secondaryVal = secondaryHeaders[col];
+        let fallbackAlias = (secondaryVal !== undefined && secondaryVal !== null && String(secondaryVal).trim() !== '') ? String(secondaryVal) : null;
+
+        if (customAlias) {
+            def.headerName = customAlias;
             def.tooltipField = col; // Cells show actual row value on hover
-        } else if (currentDictionary[col] && currentDictionary[col].alias) {
-            def.headerName = currentDictionary[col].alias;
-            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim();
-            def.tooltipField = col; // Cells show actual row value on hover
+        } else if (fallbackAlias) {
+            def.headerName = fallbackAlias;
+            def.tooltipField = col;
         } else {
-            def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim();
+            def.headerName = col;
             if (colUpper === 'LONG_DESCRIPTION') def.tooltipField = col;
         }
 
@@ -501,6 +506,14 @@ function renderCheckboxes() {
 
     let availableCols = allColumns.filter(c => !MANDATORY_COLUMNS.includes(c));
 
+    // Helper interno
+    const getAlias = (c) => {
+        let customAlias = (currentDictionary[c] && currentDictionary[c].alias) ? currentDictionary[c].alias : null;
+        let secondaryVal = secondaryHeaders[c];
+        let fallbackAlias = (secondaryVal !== undefined && secondaryVal !== null && String(secondaryVal).trim() !== '') ? String(secondaryVal) : null;
+        return customAlias || fallbackAlias;
+    };
+
     // Sort logic for the display list inside the modal to show selected items first, then alphabetically
     availableCols.sort((a, b) => {
         const aSelected = tempSelectedColumns.has(a);
@@ -509,14 +522,14 @@ function renderCheckboxes() {
         if (!aSelected && bSelected) return 1;
 
         // Show by alias if it exists
-        const aName = (currentDictionary[a] && currentDictionary[a].alias) ? currentDictionary[a].alias : a;
-        const bName = (currentDictionary[b] && currentDictionary[b].alias) ? currentDictionary[b].alias : b;
+        const aName = getAlias(a) || a;
+        const bName = getAlias(b) || b;
         return aName.localeCompare(bName);
     });
 
     // Apply visual filter
     availableCols = availableCols.filter(c => {
-        const aName = (currentDictionary[c] && currentDictionary[c].alias) ? currentDictionary[c].alias : c;
+        const aName = getAlias(c) || c;
         return c.toLowerCase().includes(filterText) || aName.toLowerCase().includes(filterText);
     });
 
@@ -541,8 +554,8 @@ function renderCheckboxes() {
         });
 
         const spanText = document.createElement('span');
-        const alias = (currentDictionary[col] && currentDictionary[col].alias) ? ` (${currentDictionary[col].alias})` : '';
-        spanText.textContent = col + alias;
+        const alias = getAlias(col);
+        spanText.textContent = col + (alias ? ` (${alias})` : '');
 
         label.appendChild(input);
         label.appendChild(document.createElement('span'));
@@ -561,7 +574,11 @@ function toggleAllCheckboxes(e) {
 
     allColumns.forEach(col => {
         if (!MANDATORY_COLUMNS.includes(col)) {
-            const aName = (currentDictionary[col] && currentDictionary[col].alias) ? currentDictionary[col].alias : col;
+            let customAlias = (currentDictionary[col] && currentDictionary[col].alias) ? currentDictionary[col].alias : null;
+            let secondaryVal = secondaryHeaders[col];
+            let fallbackAlias = (secondaryVal !== undefined && secondaryVal !== null && String(secondaryVal).trim() !== '') ? String(secondaryVal) : null;
+            const aName = customAlias || fallbackAlias || col;
+
             if (col.toLowerCase().includes(filterText) || aName.toLowerCase().includes(filterText)) {
                 if (isChecked) {
                     tempSelectedColumns.add(col);
@@ -578,7 +595,11 @@ function toggleAllCheckboxes(e) {
 function updateSelectAllState() {
     const filterText = columnSearchInput.value.toLowerCase();
     const visibleCols = allColumns.filter(c => !MANDATORY_COLUMNS.includes(c)).filter(c => {
-        const aName = (currentDictionary[c] && currentDictionary[c].alias) ? currentDictionary[c].alias : c;
+        let customAlias = (currentDictionary[c] && currentDictionary[c].alias) ? currentDictionary[c].alias : null;
+        let secondaryVal = secondaryHeaders[c];
+        let fallbackAlias = (secondaryVal !== undefined && secondaryVal !== null && String(secondaryVal).trim() !== '') ? String(secondaryVal) : null;
+        const aName = customAlias || fallbackAlias || c;
+
         return c.toLowerCase().includes(filterText) || aName.toLowerCase().includes(filterText);
     });
 
