@@ -457,12 +457,14 @@ function initAgGrid() {
         columnDefs: generateColumnDefs('base'),
         rowData: rawData,
         headerHeight: 350,
+        floatingFiltersHeight: 50,
         enableBrowserTooltips: true,
         defaultColDef: {
             sortable: true,
             filter: true,
+            floatingFilter: true,
             resizable: true,
-            minWidth: 100
+            minWidth: 5
         },
         pagination: true,
         paginationPageSize: 100,
@@ -586,10 +588,7 @@ function applyPresetToGrid() {
         if (!gridApi) return;
         const colsToAutoSize = newColDefs
             .map(c => c.field)
-            .filter(c => {
-                const upper = c.toUpperCase();
-                return upper === 'VEHICLE' || upper === 'TIMESTAMP' || upper === 'TIMESTAMP BORDO' || upper === 'SOURCE';
-            });
+            .filter(c => MANDATORY_COLUMNS.includes(c.toUpperCase()) && c.toUpperCase() !== 'LONG_DESCRIPTION')
         if (colsToAutoSize.length > 0) {
             gridApi.autoSizeColumns(colsToAutoSize);
         }

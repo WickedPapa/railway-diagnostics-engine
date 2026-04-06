@@ -20,8 +20,8 @@
 
 body {
     background-color: var(--bg-color);
-    background-image: radial-gradient(circle at top right, rgba(88, 166, 255, 0.05), transparent 400px), 
-                      radial-gradient(circle at bottom left, rgba(46, 160, 67, 0.05), transparent 400px);
+    background-image: radial-gradient(circle at top right, rgba(88, 166, 255, 0.05), transparent 400px),
+        radial-gradient(circle at bottom left, rgba(46, 160, 67, 0.05), transparent 400px);
     color: var(--text-primary);
     font-family: var(--font-ui);
     height: 100vh;
@@ -119,7 +119,7 @@ body {
 }
 
 .secondary-btn:hover {
-    background-color: rgba(255,255,255,0.05);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Preset Controls Group */
@@ -169,7 +169,7 @@ body {
 .btn-group {
     display: flex;
     gap: 6px;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     padding: 4px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
@@ -183,7 +183,7 @@ body {
 }
 
 .icon-btn:hover {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .icon-btn.danger-hover:hover {
@@ -228,7 +228,10 @@ body {
 /* Modal Overlay */
 .modal-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
     z-index: 100;
@@ -307,7 +310,7 @@ body {
 }
 
 .input-light {
-    background: rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-color);
     padding: 10px 12px;
     border-radius: 6px;
@@ -328,7 +331,7 @@ body {
     gap: 12px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
     padding: 12px;
     flex: 1;
     min-height: 300px;
@@ -361,6 +364,7 @@ body {
 .columns-list::-webkit-scrollbar {
     width: 6px;
 }
+
 .columns-list::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: 4px;
@@ -379,7 +383,7 @@ body {
 }
 
 .custom-checkbox:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .custom-checkbox input {
@@ -410,29 +414,36 @@ body {
 .spinner {
     width: 40px;
     height: 40px;
-    border: 3px solid rgba(255,255,255,0.1);
+    border: 3px solid rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     border-top-color: var(--accent-color);
     animation: spin 1s ease-in-out infinite;
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* AG Grid Dark Theme customizations to match aesthetics */
 .ag-theme-alpine-dark {
     --ag-background-color: var(--panel-bg);
     --ag-foreground-color: var(--text-primary);
-    --ag-header-background-color: rgba(0,0,0,0.3);
+    --ag-header-background-color: rgba(0, 0, 0, 0.3);
     --ag-header-foreground-color: var(--text-secondary);
     --ag-border-color: var(--border-color);
-    --ag-row-hover-color: rgba(255,255,255,0.03);
+    --ag-row-hover-color: rgba(255, 255, 255, 0.03);
     --ag-selected-row-background-color: rgba(88, 166, 255, 0.1);
     border-radius: 8px;
     overflow: hidden;
@@ -445,10 +456,12 @@ body {
     writing-mode: vertical-rl;
     transform: rotate(180deg);
     display: flex;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
     overflow: visible;
+    font-size: 18px;
 }
+
 .vertical-header .ag-header-cell-text {
     white-space: nowrap;
     overflow: visible;
@@ -459,7 +472,7 @@ body {
 .dict-modal-body {
     padding: 10px 20px 20px 20px !important;
     gap: 12px !important;
-    overflow: hidden !important; 
+    overflow: hidden !important;
     height: 100%;
 }
 
@@ -473,12 +486,13 @@ body {
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    background: rgba(0,0,0,0.2);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .dict-table-wrapper::-webkit-scrollbar {
     width: 8px;
 }
+
 .dict-table-wrapper::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: 4px;
@@ -494,7 +508,8 @@ body {
 .dict-table th {
     position: sticky;
     top: 0;
-    background: #1e232d; /* Solid fallback */
+    background: #1e232d;
+    /* Solid fallback */
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     padding: 12px;
@@ -515,7 +530,7 @@ body {
 }
 
 .dict-table tr:hover {
-    background: rgba(255,255,255,0.03);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .dict-input {
@@ -532,17 +547,48 @@ body {
 }
 
 .dict-input:hover {
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .dict-input:focus {
-    background: rgba(0,0,0,0.3);
+    background: rgba(0, 0, 0, 0.3);
     border-color: var(--accent-color);
 }
 
 /* Highlight cell variation */
 .highlight-change {
-    background-color: rgba(255, 152, 0, 0.4) !important; /* Orange background */
+    background-color: rgba(255, 152, 0, 0.4) !important;
+    /* Orange background */
     color: #fff !important;
     font-weight: 600;
+}
+
+.ag-theme-alpine-dark .ag-cell,
+.ag-theme-alpine-dark .ag-header-cell {
+    font-size: 11px;
+    padding: 0px !important;
+    text-align: center;
+}
+
+.ag-theme-alpine-dark .ag-header-cell-label {
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+
+.ag-theme-alpine-dark .ag-floating-filter {
+    display: flex;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.ag-theme-alpine-dark .ag-floating-filter-body {
+    display: none !important;
+}
+
+.ag-theme-alpine-dark .ag-floating-filter-button {
+    margin: 0 auto !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
