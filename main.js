@@ -1,5 +1,6 @@
 // Variabili Globali
 let rawData = [];
+let rawDataAllRows = [];
 let secondaryHeaders = {};
 let allColumns = [];
 let gridApi = null;
@@ -8,10 +9,11 @@ let currentDictionary = {};
 let truncateDesc = true;
 let highlightChanges = (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_HIGHLIGHT_CHANGES !== undefined) ? CONFIG.DEFAULT_HIGHLIGHT_CHANGES : true;
 let currentExclusions = [];
+let currentRowFilters = [];
 
 const MANDATORY_COLUMNS = (typeof CONFIG !== 'undefined' && CONFIG.MANDATORY_COLUMNS)
     ? CONFIG.MANDATORY_COLUMNS
-    : [];
+    : ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
 
 function sanitizeColumnsForCurrentData(columns) {
     if (!Array.isArray(columns)) return [];
@@ -38,9 +40,56 @@ function computeBaseColumns() {
     return [...allColumns];
 }
 
+function findLongDescriptionKey(sampleRow) {
+    if (!sampleRow) return null;
+    const keys = Object.keys(sampleRow);
+    for (const key of keys) {
+        if (typeof key === 'string' && key.toUpperCase() === 'LONG_DESCRIPTION') {
+            return key;
+        }
+    }
+    return null;
+}
+
+function applyRowFilters(dataSet) {
+    if (!Array.isArray(dataSet)) return [];
+    if (!Array.isArray(currentRowFilters) || currentRowFilters.length === 0) {
+        return [...dataSet];
+    }
+
+    const validFilters = currentRowFilters
+        .map(f => (typeof f === 'string' ? f.trim() : ''))
+        .filter(f => f.length > 0)
+        .map(f => f.toLowerCase());
+
+    if (validFilters.length === 0) {
+        return [...dataSet];
+    }
+
+    const longDescKey = findLongDescriptionKey(dataSet.find(row => row && Object.keys(row || {}).length > 0));
+    if (!longDescKey) {
+        return [...dataSet];
+    }
+
+    return dataSet.filter(row => {
+        const value = (row[longDescKey] === undefined || row[longDescKey] === null)
+            ? ''
+            : String(row[longDescKey]);
+        const lowerValue = value.toLowerCase();
+        return !validFilters.some(filterVal => lowerValue.includes(filterVal));
+    });
+}
+
+function refreshRowFilteringAndGrid() {
+    rawData = applyRowFilters(rawDataAllRows);
+    if (gridApi) {
+        gridApi.setGridOption('rowData', rawData);
+    }
+}
+
 // Struttura Presets: { id : { name: string, columns: string[], defaultSortOrder: string } }
 let presets = {
-    'base': { name: 'Vista Base (Solo Essenziali)', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' }
+    'base': { name: 'Default', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' }
 };
 
 // --- DOM Elements ---
@@ -58,6 +107,7 @@ const btnDictionary = document.getElementById('btnDictionary');
 const btnExclusions = document.getElementById('btnExclusions');
 const btnExport = document.getElementById('btnExportPresets');
 const importInput = document.getElementById('importPresetInput');
+const btnRowFilters = document.getElementById('btnRowFilters');
 
 const myGrid = document.getElementById('myGrid');
 const emptyState = document.getElementById('emptyState');
@@ -100,6 +150,18 @@ const exclusionSearchInput = document.getElementById('exclusionSearchInput');
 const exclusionTableBody = document.getElementById('exclusionTableBody');
 const btnAddExclusion = document.getElementById('btnAddExclusion');
 
+// Row Filter Modal Elements
+const rowFilterModal = document.getElementById('rowFilterModal');
+const btnCloseRowFilterModal = document.getElementById('btnCloseRowFilterModal');
+const btnCancelRowFilterModal = document.getElementById('btnCancelRowFilterModal');
+const btnSaveRowFilters = document.getElementById('btnSaveRowFilters');
+const btnResetRowFilters = document.getElementById('btnResetRowFilters');
+const btnExportRowFilters = document.getElementById('btnExportRowFilters');
+const importRowFiltersInput = document.getElementById('importRowFiltersInput');
+const rowFilterSearchInput = document.getElementById('rowFilterSearchInput');
+const rowFilterTableBody = document.getElementById('rowFilterTableBody');
+const btnAddRowFilter = document.getElementById('btnAddRowFilter');
+
 // Modal state
 let modalMode = 'clone'; // 'clone' or 'edit'
 let editingPresetId = null;
@@ -114,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     initExclusions();
+    initRowFilters();
     initDictionary();
     loadPresetsFromStorage();
     updatePresetDropdown();
@@ -163,6 +226,7 @@ function initEventListeners() {
     btnDeleteAllPresets.addEventListener('click', deleteAllPresets);
     btnDictionary.addEventListener('click', openDictModal);
     btnExclusions.addEventListener('click', openExclusionModal);
+    btnRowFilters.addEventListener('click', openRowFilterModal);
 
     btnExport.addEventListener('click', exportPresets);
     importInput.addEventListener('change', importPresets);
@@ -208,6 +272,23 @@ function initEventListeners() {
     exclusionSearchInput.addEventListener('input', renderExclusionTable);
     btnExportExclusions.addEventListener('click', exportExclusions);
     importExclusionsInput.addEventListener('change', importExclusions);
+
+    // Row Filter Modal
+    btnCloseRowFilterModal.addEventListener('click', closeRowFilterModal);
+    btnCancelRowFilterModal.addEventListener('click', closeRowFilterModal);
+    btnSaveRowFilters.addEventListener('click', saveRowFiltersChanges);
+    btnAddRowFilter.addEventListener('click', addRowFilter);
+    btnResetRowFilters.addEventListener('click', () => {
+        if (confirm("Vuoi davvero rimuovere tutti i filtri riga salvati? L'operazione è irreversibile.")) {
+            currentRowFilters = [];
+            saveRowFiltersToStorage();
+            renderRowFilterTable();
+            refreshRowFilteringAndGrid();
+        }
+    });
+    rowFilterSearchInput.addEventListener('input', renderRowFilterTable);
+    btnExportRowFilters.addEventListener('click', exportRowFilters);
+    importRowFiltersInput.addEventListener('change', importRowFilters);
 }
 
 // --- Storage Management Exclusions ---
@@ -235,6 +316,26 @@ function resetExclusionsToDefault() {
 
 function saveExclusionsToStorage() {
     localStorage.setItem('csvExclusions', JSON.stringify(currentExclusions));
+}
+
+// --- Storage Management Row Filters ---
+function initRowFilters() {
+    const saved = localStorage.getItem('csvRowFilters');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            currentRowFilters = Array.isArray(parsed) ? parsed : [];
+            return;
+        } catch (err) {
+            console.error("Errore initRowFilters:", err);
+        }
+    }
+    currentRowFilters = [];
+    saveRowFiltersToStorage();
+}
+
+function saveRowFiltersToStorage() {
+    localStorage.setItem('csvRowFilters', JSON.stringify(currentRowFilters));
 }
 
 // --- Storage Management Dictionary ---
@@ -277,7 +378,7 @@ function loadPresetsFromStorage() {
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
-            presets = { ...parsed, base: { name: 'Vista Base (Solo Essenziali)', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' } };
+            presets = { ...parsed, base: { name: 'Default', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' } };
         } catch (e) {
             console.error("Errore nel caricamento presets", e);
         }
@@ -326,14 +427,16 @@ function handleFileUpload(e) {
         complete: function (results) {
             if (results.data.length > 0) {
                 secondaryHeaders = results.data[0];
-                rawData = results.data.slice(1);
+                rawDataAllRows = results.data.slice(1);
                 // Apply exclusions immediately upon extracting columns
-                let totalColumns = results.meta.fields || Object.keys(rawData[0]);
+                let totalColumns = results.meta.fields || (rawDataAllRows[0] ? Object.keys(rawDataAllRows[0]) : []);
                 allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
+                rawData = applyRowFilters(rawDataAllRows);
                 presets['base'].columns = computeBaseColumns();
                 initAgGrid();
             } else {
                 rawData = [];
+                rawDataAllRows = [];
                 alert("Il file CSV sembra essere vuoto o non valido.");
                 emptyState.style.display = 'block';
             }
@@ -862,7 +965,7 @@ function importPresets(e) {
         try {
             const imported = JSON.parse(event.target.result);
             if (imported && typeof imported === 'object') {
-                presets = { ...presets, ...imported, base: { name: 'Vista Base (Solo Essenziali)', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' } };
+                presets = { ...presets, ...imported, base: { name: 'Default', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' } };
                 savePresetsToStorage();
                 updatePresetDropdown();
                 alert("Preset importati con successo!");
@@ -937,15 +1040,20 @@ function saveExclusionsChanges() {
 }
 
 function reloadAllColumnsFromData() {
-    let totalColumns = Object.keys(rawData[0]);
-    // Safety check if PapaParse populated meta.fields
-    if (rawData.length > 0 && typeof Papa !== 'undefined') {
-        // Unfortunately PapaParse doesn't store the fields string natively inside RAWdata without another pass or using the keys
-        // We'll trust the keys of the first row
-        allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
-        presets['base'].columns = computeBaseColumns();
+    let referenceRow = rawDataAllRows[0] || rawData[0] || null;
+    if (!referenceRow) {
+        allColumns = [];
+        presets['base'].columns = [];
+        rawData = applyRowFilters(rawDataAllRows);
         initAgGrid();
+        return;
     }
+
+    let totalColumns = Object.keys(referenceRow);
+    allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
+    presets['base'].columns = computeBaseColumns();
+    rawData = applyRowFilters(rawDataAllRows);
+    initAgGrid();
 }
 
 function exportExclusions() {
@@ -980,6 +1088,106 @@ function importExclusions(e) {
             }
         } catch (err) {
             alert("Errore durante l'importazione: file non valido.");
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset
+}
+
+// --- Row Filter Management ---
+function openRowFilterModal() {
+    rowFilterSearchInput.value = '';
+    renderRowFilterTable();
+    rowFilterModal.classList.add('active');
+}
+
+function closeRowFilterModal() {
+    rowFilterModal.classList.remove('active');
+}
+
+function renderRowFilterTable() {
+    const filterText = rowFilterSearchInput.value.toLowerCase();
+    const rows = currentRowFilters
+        .map(item => (typeof item === 'string' ? item : String(item || '')))
+        .filter(item => item.toLowerCase().includes(filterText))
+        .sort((a, b) => a.localeCompare(b));
+
+    const fragments = rows.map(value => `
+        <tr>
+            <td>${value}</td>
+            <td style="text-align: center;">
+                <button class="btn icon-btn danger-hover" onclick="removeRowFilter('${encodeURIComponent(value)}')" title="Rimuovi filtro">🗑</button>
+            </td>
+        </tr>
+    `);
+    rowFilterTableBody.innerHTML = fragments.join('');
+}
+
+window.removeRowFilter = function (encodedValue) {
+    const value = decodeURIComponent(encodedValue);
+    if (!value) return;
+    currentRowFilters = currentRowFilters.filter(item => item !== value);
+    saveRowFiltersToStorage();
+    renderRowFilterTable();
+    refreshRowFilteringAndGrid();
+};
+
+function addRowFilter() {
+    const newFilter = prompt("Inserisci la stringa da usare per nascondere le righe (ricerca in LONG_DESCRIPTION):");
+    if (!newFilter) return;
+    const finalFilter = newFilter.trim();
+    if (finalFilter.length === 0) return;
+    if (currentRowFilters.includes(finalFilter)) {
+        alert("Questa stringa è già presente nell'elenco dei filtri.");
+        return;
+    }
+    currentRowFilters.push(finalFilter);
+    saveRowFiltersToStorage();
+    rowFilterSearchInput.value = finalFilter;
+    renderRowFilterTable();
+    refreshRowFilteringAndGrid();
+}
+
+function saveRowFiltersChanges() {
+    saveRowFiltersToStorage();
+    closeRowFilterModal();
+    refreshRowFilteringAndGrid();
+}
+
+function exportRowFilters() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentRowFilters, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "row_filters_export.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function importRowFilters(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        try {
+            const imported = JSON.parse(event.target.result);
+            if (imported && Array.isArray(imported)) {
+                imported.forEach(item => {
+                    const cleaned = typeof item === 'string' ? item.trim() : '';
+                    if (cleaned.length > 0 && !currentRowFilters.includes(cleaned)) {
+                        currentRowFilters.push(cleaned);
+                    }
+                });
+                saveRowFiltersToStorage();
+                renderRowFilterTable();
+                refreshRowFilteringAndGrid();
+                alert("Filtri riga importati con successo!");
+            } else {
+                alert("Il file non contiene un array valido di stringhe.");
+            }
+        } catch (err) {
+            alert("Errore durante l'importazione dei filtri riga.");
         }
     };
     reader.readAsText(file);

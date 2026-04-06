@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="it">
 
 <head>
@@ -76,7 +76,7 @@
 
                 <div class="btn-group">
                     <button id="btnClonePreset" class="btn icon-btn" title="Clona Preset / Nuovo da...">
-                        Colonna +
+                        Nuovo Preset
                     </button>
                     <button id="btnEditPreset" class="btn icon-btn" title="Modifica Preset Corrente">
                         ✎
@@ -88,14 +88,6 @@
                         title="Svuota Tutti i Preset Custom">
                         🔥
                     </button>
-                    <div class="separator"></div>
-                    <button id="btnDictionary" class="btn icon-btn" title="Gestore Dizionario (Alias e Ordine)">
-                        📖
-                    </button>
-                    <button id="btnExclusions" class="btn icon-btn" title="Gestore Esclusioni (Nascondi Colonne)">
-                        🚫
-                    </button>
-                    <div class="separator"></div>
                     <button id="btnExportPresets" class="btn icon-btn" title="Esporta Preset">
                         ⭳ Export
                     </button>
@@ -104,6 +96,16 @@
                         ⭱ Import
                     </label>
                     <input type="file" id="importPresetInput" accept=".json" style="display: none;">
+                    <div class="separator"></div>
+                    <button id="btnDictionary" class="btn icon-btn" title="Gestore Dizionario (Alias e Ordine)">
+                        📖
+                    </button>
+                    <button id="btnExclusions" class="btn icon-btn" title="Gestore Esclusioni (Nascondi Colonne)">
+                        🚫
+                    </button>
+                    <button id="btnRowFilters" class="btn icon-btn" title="Gestore Filtri Righe (LONG_DESCRIPTION)">
+                        Filtra Righe
+                    </button>
                 </div>
             </div>
         </div>
@@ -239,6 +241,61 @@
     </div>
 
     <!-- Exclusion Modal -->
+    <!-- Modal for Row Filters -->
+    <div id="rowFilterModal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 4h18"></path>
+                        <path d="M8 4v16c0 .5-.5 1-1 1s-1-.5-1-1V4"></path>
+                        <path d="M18 4v9c0 .5-.5 1-1 1s-1-.5-1-1V4"></path>
+                    </svg>
+                    Filtri Righe (LONG_DESCRIPTION)
+                </h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="btnAddRowFilter" class="btn icon-btn" title="Aggiungi Filtro Riga">➕</button>
+                    <div class="separator"></div>
+                    <button id="btnExportRowFilters" class="btn icon-btn" title="Esporta Filtri Riga">⭳</button>
+                    <label for="importRowFiltersInput" class="btn icon-btn" title="Importa Filtri Riga"
+                        style="cursor: pointer; margin:0;">⭱</label>
+                    <input type="file" id="importRowFiltersInput" accept=".json" style="display: none;">
+                    <button id="btnCloseRowFilterModal" class="btn-close">×</button>
+                </div>
+            </div>
+
+            <div class="modal-body dict-modal-body">
+                <div class="search-box">
+                    <input type="text" id="rowFilterSearchInput" placeholder="Cerca stringa filtro..."
+                        class="input-light dict-search">
+                    <span class="search-icon" style="left: 10px; top: 10px;">🔍</span>
+                </div>
+                <div class="dict-table-wrapper">
+                    <table class="dict-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80%">Stringa nel campo LONG_DESCRIPTION</th>
+                                <th style="width: 20%; text-align: center;">Azione</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rowFilterTableBody">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btnResetRowFilters" class="btn secondary-btn danger-hover" style="margin-right: auto;">
+                    Svuota Tutto
+                </button>
+                <button id="btnCancelRowFilterModal" class="btn secondary-btn">Annulla</button>
+                <button id="btnSaveRowFilters" class="btn primary-btn">Salva e Applica</button>
+            </div>
+        </div>
+    </div>
+
     <div id="exclusionModal" class="modal-overlay">
         <div class="modal-content glass-panel" style="max-width: 600px;">
             <div class="modal-header">
