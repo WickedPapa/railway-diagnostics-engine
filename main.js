@@ -5,13 +5,38 @@ let allColumns = [];
 let gridApi = null;
 let currentPresetId = 'base';
 let currentDictionary = {};
-let truncateDesc = false;
+let truncateDesc = true;
 let highlightChanges = (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_HIGHLIGHT_CHANGES !== undefined) ? CONFIG.DEFAULT_HIGHLIGHT_CHANGES : true;
 let currentExclusions = [];
 
-const MANDATORY_COLUMNS = (typeof CONFIG !== 'undefined' && CONFIG.MANDATORY_COLUMNS) 
-    ? CONFIG.MANDATORY_COLUMNS 
-    : ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
+const MANDATORY_COLUMNS = (typeof CONFIG !== 'undefined' && CONFIG.MANDATORY_COLUMNS)
+    ? CONFIG.MANDATORY_COLUMNS
+    : [];
+
+function sanitizeColumnsForCurrentData(columns) {
+    if (!Array.isArray(columns)) return [];
+    if (!Array.isArray(allColumns) || allColumns.length === 0) {
+        return [...columns];
+    }
+    const availableSet = new Set(allColumns);
+    const sanitized = [];
+    columns.forEach(col => {
+        if (availableSet.has(col) && !sanitized.includes(col)) {
+            sanitized.push(col);
+        }
+    });
+    return sanitized;
+}
+
+function getActiveMandatoryColumns() {
+    return sanitizeColumnsForCurrentData(MANDATORY_COLUMNS);
+}
+
+function computeBaseColumns() {
+    const activeMandatory = getActiveMandatoryColumns();
+    if (activeMandatory.length > 0) return activeMandatory;
+    return [...allColumns];
+}
 
 // Struttura Presets: { id : { name: string, columns: string[], defaultSortOrder: string } }
 let presets = {
@@ -305,6 +330,7 @@ function handleFileUpload(e) {
                 // Apply exclusions immediately upon extracting columns
                 let totalColumns = results.meta.fields || Object.keys(rawData[0]);
                 allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
+                presets['base'].columns = computeBaseColumns();
                 initAgGrid();
             } else {
                 rawData = [];
@@ -357,9 +383,13 @@ function getSortOrderValue(colName, sortType) {
 }
 
 function generateColumnDefs(presetId) {
-    let colsToShow = allColumns;
+    let colsToShow = [...allColumns];
     if (presets[presetId]) {
-        colsToShow = [...presets[presetId].columns]; // Clone avoiding references
+        colsToShow = sanitizeColumnsForCurrentData(presets[presetId].columns);
+    }
+
+    if (!colsToShow || colsToShow.length === 0) {
+        colsToShow = [...allColumns];
     }
 
     const sortType = sortSelect.value;
@@ -631,9 +661,10 @@ function savePresetFromModal() {
     const columnsArray = Array.from(tempSelectedColumns);
     const orderSelection = presetSortSelect.value;
 
-    const finalColumns = [...MANDATORY_COLUMNS];
+    const activeMandatory = getActiveMandatoryColumns();
+    const finalColumns = [...activeMandatory];
     columnsArray.forEach(col => {
-        if (!MANDATORY_COLUMNS.includes(col)) {
+        if (!MANDATORY_COLUMNS.includes(col) && allColumns.includes(col) && !finalColumns.includes(col)) {
             finalColumns.push(col);
         }
     });
@@ -912,6 +943,7 @@ function reloadAllColumnsFromData() {
         // Unfortunately PapaParse doesn't store the fields string natively inside RAWdata without another pass or using the keys
         // We'll trust the keys of the first row
         allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
+        presets['base'].columns = computeBaseColumns();
         initAgGrid();
     }
 }
@@ -953,4 +985,3 @@ function importExclusions(e) {
     reader.readAsText(file);
     e.target.value = ''; // Reset
 }
-
