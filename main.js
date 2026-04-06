@@ -10,6 +10,7 @@ let truncateDesc = true;
 let highlightChanges = (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_HIGHLIGHT_CHANGES !== undefined) ? CONFIG.DEFAULT_HIGHLIGHT_CHANGES : true;
 let currentExclusions = [];
 let currentRowFilters = [];
+let tempRowFilters = [];
 
 const MANDATORY_COLUMNS = (typeof CONFIG !== 'undefined' && CONFIG.MANDATORY_COLUMNS)
     ? CONFIG.MANDATORY_COLUMNS
@@ -279,11 +280,12 @@ function initEventListeners() {
     btnSaveRowFilters.addEventListener('click', saveRowFiltersChanges);
     btnAddRowFilter.addEventListener('click', addRowFilter);
     btnResetRowFilters.addEventListener('click', () => {
-        if (confirm("Vuoi davvero rimuovere tutti i filtri riga salvati? L'operazione è irreversibile.")) {
+        if (confirm("Vuoi davvero svuotare tutti i filtri riga correnti? L'azione verrà applicata subito.")) {
+            tempRowFilters = [];
             currentRowFilters = [];
             saveRowFiltersToStorage();
-            renderRowFilterTable();
             refreshRowFilteringAndGrid();
+            closeRowFilterModal();
         }
     });
     rowFilterSearchInput.addEventListener('input', renderRowFilterTable);
@@ -1097,6 +1099,7 @@ function importExclusions(e) {
 // --- Row Filter Management ---
 function openRowFilterModal() {
     rowFilterSearchInput.value = '';
+    tempRowFilters = [...currentRowFilters];
     renderRowFilterTable();
     rowFilterModal.classList.add('active');
 }
@@ -1107,7 +1110,7 @@ function closeRowFilterModal() {
 
 function renderRowFilterTable() {
     const filterText = rowFilterSearchInput.value.toLowerCase();
-    const rows = currentRowFilters
+    const rows = tempRowFilters
         .map(item => (typeof item === 'string' ? item : String(item || '')))
         .filter(item => item.toLowerCase().includes(filterText))
         .sort((a, b) => a.localeCompare(b));
@@ -1126,10 +1129,8 @@ function renderRowFilterTable() {
 window.removeRowFilter = function (encodedValue) {
     const value = decodeURIComponent(encodedValue);
     if (!value) return;
-    currentRowFilters = currentRowFilters.filter(item => item !== value);
-    saveRowFiltersToStorage();
+    tempRowFilters = tempRowFilters.filter(item => item !== value);
     renderRowFilterTable();
-    refreshRowFilteringAndGrid();
 };
 
 function addRowFilter() {
@@ -1137,18 +1138,17 @@ function addRowFilter() {
     if (!newFilter) return;
     const finalFilter = newFilter.trim();
     if (finalFilter.length === 0) return;
-    if (currentRowFilters.includes(finalFilter)) {
+    if (tempRowFilters.includes(finalFilter)) {
         alert("Questa stringa è già presente nell'elenco dei filtri.");
         return;
     }
-    currentRowFilters.push(finalFilter);
-    saveRowFiltersToStorage();
+    tempRowFilters.push(finalFilter);
     rowFilterSearchInput.value = finalFilter;
     renderRowFilterTable();
-    refreshRowFilteringAndGrid();
 }
 
 function saveRowFiltersChanges() {
+    currentRowFilters = [...tempRowFilters];
     saveRowFiltersToStorage();
     closeRowFilterModal();
     refreshRowFilteringAndGrid();
@@ -1175,14 +1175,12 @@ function importRowFilters(e) {
             if (imported && Array.isArray(imported)) {
                 imported.forEach(item => {
                     const cleaned = typeof item === 'string' ? item.trim() : '';
-                    if (cleaned.length > 0 && !currentRowFilters.includes(cleaned)) {
-                        currentRowFilters.push(cleaned);
+                    if (cleaned.length > 0 && !tempRowFilters.includes(cleaned)) {
+                        tempRowFilters.push(cleaned);
                     }
                 });
-                saveRowFiltersToStorage();
                 renderRowFilterTable();
-                refreshRowFilteringAndGrid();
-                alert("Filtri riga importati con successo!");
+                alert("Filtri riga importati. Premi \"Salva e Applica\" per confermare.");
             } else {
                 alert("Il file non contiene un array valido di stringhe.");
             }
