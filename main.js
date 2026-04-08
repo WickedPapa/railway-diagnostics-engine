@@ -59,9 +59,10 @@ function applyRowFilters(dataSet) {
     }
 
     const validFilters = currentRowFilters
-        .map(f => (typeof f === 'string' ? f.trim() : ''))
-        .filter(f => f.length > 0)
-        .map(f => f.toLowerCase());
+        .filter(f => f && f.action === 'hide')
+        .map(f => (typeof f.pattern === 'string' ? f.pattern.trim() : ''))
+        .filter(p => p.length > 0)
+        .map(p => p.toLowerCase());
 
     if (validFilters.length === 0) {
         return [...dataSet];
@@ -85,6 +86,7 @@ function refreshRowFilteringAndGrid() {
     rawData = applyRowFilters(rawDataAllRows);
     if (gridApi) {
         gridApi.setGridOption('rowData', rawData);
+        gridApi.redrawRows();
     }
 }
 
@@ -326,7 +328,18 @@ function initRowFilters() {
     if (saved) {
         try {
             const parsed = JSON.parse(saved);
-            currentRowFilters = Array.isArray(parsed) ? parsed : [];
+            currentRowFilters = Array.isArray(parsed) ? parsed.map(f => {
+                if (typeof f === 'string') return { pattern: f, action: 'hide', color: '#ffff00' };
+                // Migrazione vecchia logica colori -> highlight + hex
+                if (f.action && f.action !== 'hide' && f.action !== 'highlight') {
+                    const colorMap = { yellow: '#ffff00', blue: '#2196f3', green: '#4caf50', red: '#f44336', purple: '#9c27b0' };
+                    f.color = colorMap[f.action] || '#ffff00';
+                    f.action = 'highlight';
+                }
+                if (!f.color) f.color = '#ffff00';
+                if (!f.action) f.action = 'hide';
+                return f;
+            }) : [];
             return;
         } catch (err) {
             console.error("Errore initRowFilters:", err);
@@ -469,7 +482,29 @@ function initAgGrid() {
         pagination: false,
         paginationPageSize: 100,
         animateRows: true,
-        rowSelection: 'multiple'
+        rowSelection: 'multiple',
+        getRowStyle: (params) => {
+            if (!params.data || !currentRowFilters || currentRowFilters.length === 0) return null;
+
+            // Trova la chiave della descrizione lunga
+            const longDescKey = findLongDescriptionKey(params.data);
+            if (!longDescKey) return null;
+
+            const value = (params.data[longDescKey] === undefined || params.data[longDescKey] === null)
+                ? ''
+                : String(params.data[longDescKey]).toLowerCase();
+
+            for (const rule of currentRowFilters) {
+                if (rule.action === 'highlight' && rule.pattern && rule.color) {
+                    const p = rule.pattern.toLowerCase();
+                    if (value.includes(p)) {
+                        // Aggiunge alfa del 25% (44 in hex) per la trasparenza
+                        return { backgroundColor: rule.color + '44' };
+                    }
+                }
+            }
+            return null;
+        }
     };
 
     if (gridApi) {
@@ -1111,40 +1146,76 @@ function closeRowFilterModal() {
 
 function renderRowFilterTable() {
     const filterText = rowFilterSearchInput.value.toLowerCase();
-    const rows = tempRowFilters
-        .map(item => (typeof item === 'string' ? item : String(item || '')))
-        .filter(item => item.toLowerCase().includes(filterText))
-        .sort((a, b) => a.localeCompare(b));
+    const filteredRowsIndices = [];
+    tempRowFilters.forEach((item, index) => {
+        const p = (item && item.pattern) ? item.pattern : '';
+        if (p.toLowerCase().includes(filterText)) {
+            filteredRowsIndices.push(index);
+        }
+    });
 
-    const fragments = rows.map(value => `
-        <tr>
-            <td>${value}</td>
-            <td style="text-align: center;">
-                <button class="btn icon-btn danger-hover" onclick="removeRowFilter('${encodeURIComponent(value)}')" title="Rimuovi filtro">🗑</button>
-            </td>
-        </tr>
-    `);
-    rowFilterTableBody.innerHTML = fragments.join('');
+    let html = '';
+    filteredRowsIndices.forEach(originalIndex => {
+        const rule = tempRowFilters[originalIndex];
+        const pattern = rule.pattern || '';
+        const currentAction = rule.action || 'hide';
+        const currentColor = rule.color || '#ffff00';
+
+        const isHighlight = currentAction === 'highlight';
+
+        html += `
+            <tr>
+                <td>
+                    <input type="text" class="dict-input" value="${pattern}" 
+                           onchange="updateRowFilterPattern(${originalIndex}, this.value)" 
+                           placeholder="Stringa da cercare...">
+                </td>
+                <td>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <select class="action-select" style="flex: 1;" onchange="updateRowFilterAction(${originalIndex}, this.value)">
+                            <option value="hide" ${currentAction === 'hide' ? 'selected' : ''}>🚫 Nascondi</option>
+                            <option value="highlight" ${currentAction === 'highlight' ? 'selected' : ''}>🎨 Colora</option>
+                        </select>
+                        <input type="color" class="color-picker-input" value="${currentColor}" 
+                               ${!isHighlight ? 'style="display:none"' : ''}
+                               onchange="updateRowFilterColor(${originalIndex}, this.value)">
+                    </div>
+                </td>
+                <td style="text-align: center;">
+                    <button class="btn icon-btn danger-hover" onclick="removeRowFilter(${originalIndex})" title="Rimuovi riga">🗑</button>
+                </td>
+            </tr>
+        `;
+    });
+    rowFilterTableBody.innerHTML = html;
 }
 
-window.removeRowFilter = function (encodedValue) {
-    const value = decodeURIComponent(encodedValue);
-    if (!value) return;
-    tempRowFilters = tempRowFilters.filter(item => item !== value);
+window.updateRowFilterAction = function (index, newVal) {
+    if (tempRowFilters[index]) {
+        tempRowFilters[index].action = newVal;
+        renderRowFilterTable(); // Re-render to show/hide color picker
+    }
+};
+
+window.updateRowFilterPattern = function (index, newVal) {
+    if (tempRowFilters[index]) {
+        tempRowFilters[index].pattern = newVal;
+    }
+};
+
+window.updateRowFilterColor = function (index, newVal) {
+    if (tempRowFilters[index]) {
+        tempRowFilters[index].color = newVal;
+    }
+};
+
+window.removeRowFilter = function (index) {
+    tempRowFilters.splice(index, 1);
     renderRowFilterTable();
 };
 
 function addRowFilter() {
-    const newFilter = prompt("Inserisci la stringa da usare per nascondere le righe (ricerca in LONG_DESCRIPTION):");
-    if (!newFilter) return;
-    const finalFilter = newFilter.trim();
-    if (finalFilter.length === 0) return;
-    if (tempRowFilters.includes(finalFilter)) {
-        alert("Questa stringa è già presente nell'elenco dei filtri.");
-        return;
-    }
-    tempRowFilters.push(finalFilter);
-    rowFilterSearchInput.value = finalFilter;
+    tempRowFilters.push({ pattern: '', action: 'hide', color: '#ffff00' });
     renderRowFilterTable();
 }
 
@@ -1175,15 +1246,16 @@ function importRowFilters(e) {
             const imported = JSON.parse(event.target.result);
             if (imported && Array.isArray(imported)) {
                 imported.forEach(item => {
-                    const cleaned = typeof item === 'string' ? item.trim() : '';
-                    if (cleaned.length > 0 && !tempRowFilters.includes(cleaned)) {
-                        tempRowFilters.push(cleaned);
+                    if (typeof item === 'string') {
+                        tempRowFilters.push({ pattern: item.trim(), action: 'hide' });
+                    } else if (item && item.pattern) {
+                        tempRowFilters.push(item);
                     }
                 });
                 renderRowFilterTable();
                 alert("Filtri riga importati. Premi \"Salva e Applica\" per confermare.");
             } else {
-                alert("Il file non contiene un array valido di stringhe.");
+                alert("Il file non contiene un formato valido per i filtri riga.");
             }
         } catch (err) {
             alert("Errore durante l'importazione dei filtri riga.");
