@@ -14,7 +14,7 @@ let tempRowFilters = [];
 
 const MANDATORY_COLUMNS = (typeof CONFIG !== 'undefined' && CONFIG.MANDATORY_COLUMNS)
     ? CONFIG.MANDATORY_COLUMNS
-    : ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION'];
+    : [''];
 
 function sanitizeColumnsForCurrentData(columns) {
     if (!Array.isArray(columns)) return [];
@@ -456,7 +456,7 @@ function initAgGrid() {
     const gridOptions = {
         columnDefs: generateColumnDefs('base'),
         rowData: rawData,
-        headerHeight: 350,
+        headerHeight: 200,
         floatingFiltersHeight: 50,
         enableBrowserTooltips: true,
         defaultColDef: {
@@ -466,7 +466,7 @@ function initAgGrid() {
             resizable: true,
             minWidth: 5
         },
-        pagination: true,
+        pagination: false,
         paginationPageSize: 100,
         animateRows: true
     };
@@ -588,7 +588,7 @@ function applyPresetToGrid() {
         if (!gridApi) return;
         const colsToAutoSize = newColDefs
             .map(c => c.field)
-            .filter(c => MANDATORY_COLUMNS.includes(c.toUpperCase()) && c.toUpperCase() !== 'LONG_DESCRIPTION')
+            .filter(c => MANDATORY_COLUMNS.includes(c.toUpperCase()))
         if (colsToAutoSize.length > 0) {
             gridApi.autoSizeColumns(colsToAutoSize);
         }

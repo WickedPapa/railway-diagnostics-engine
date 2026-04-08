@@ -454,12 +454,12 @@ body {
 /* Vertical Headers styling for S_ columns */
 .vertical-header .ag-header-cell-label {
     writing-mode: vertical-rl;
-    transform: rotate(180deg);
+    /*transform: rotate(180deg);*/
     display: flex;
-    justify-content: center;
+    justify-content: flex-start !important;
     align-items: center;
     overflow: visible;
-    font-size: 18px;
+    font-size: 13px;
 }
 
 .vertical-header .ag-header-cell-text {
@@ -575,6 +575,9 @@ body {
     align-items: center !important;
 }
 
+.vertical-header .ag-header-cell-label {
+    justify-content: flex-start !important;
+}
 
 .ag-theme-alpine-dark .ag-floating-filter {
     display: flex;
