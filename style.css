@@ -444,13 +444,14 @@ body {
     --ag-header-background-color: rgba(0, 0, 0, 0.3);
     --ag-header-foreground-color: var(--text-secondary);
     --ag-border-color: var(--border-color);
-    --ag-row-hover-color: rgba(255, 255, 255, 0.03);
-    --ag-selected-row-background-color: rgba(88, 166, 255, 0.1);
+    --ag-row-hover-color: rgba(255, 255, 255, 0.05);
+    --ag-selected-row-background-color: rgba(88, 166, 255, 0.15);
     border-radius: 8px;
     overflow: hidden;
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-color);
 }
+
 
 /* Vertical Headers styling for S_ columns */
 .vertical-header .ag-header-cell-label {

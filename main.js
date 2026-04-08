@@ -468,7 +468,8 @@ function initAgGrid() {
         },
         pagination: false,
         paginationPageSize: 100,
-        animateRows: true
+        animateRows: true,
+        rowSelection: 'multiple'
     };
 
     if (gridApi) {
