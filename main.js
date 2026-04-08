@@ -523,6 +523,7 @@ function generateColumnDefs(presetId) {
             };
         } else if (colUpper === 'LONG_DESCRIPTION') {
             def.width = 200;
+            def.cellClass = 'left-aligned-cell';
             def.valueFormatter = (params) => {
                 if (params.value && typeof params.value === 'string' && truncateDesc) {
                     const dashIndex = params.value.indexOf(' - ');

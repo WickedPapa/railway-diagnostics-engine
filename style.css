@@ -60,6 +60,7 @@ body {
     letter-spacing: -0.5px;
     background: linear-gradient(90deg, #fff, #8b949e);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
@@ -568,6 +569,11 @@ body {
     font-size: 11px;
     padding: 0px !important;
     text-align: center;
+}
+
+.left-aligned-cell {
+    text-align: left !important;
+    padding-left: 12px !important;
 }
 
 .ag-theme-alpine-dark .ag-header-cell-label {
