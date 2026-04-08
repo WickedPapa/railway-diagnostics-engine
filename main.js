@@ -596,9 +596,6 @@ function generateColumnDefs(presetId) {
             };
         }
 
-        // Apply Custom Alias
-        def.headerTooltip = `${col}\n${secondaryHeaders[col] || ''}`.trim();
-
         let customAlias = (currentDictionary[colUpper] && currentDictionary[colUpper].alias) ? currentDictionary[colUpper].alias :
             ((currentDictionary[col] && currentDictionary[col].alias) ? currentDictionary[col].alias : null);
 
@@ -608,6 +605,13 @@ function generateColumnDefs(presetId) {
         } else {
             def.headerName = col;
             if (colUpper === 'LONG_DESCRIPTION') def.tooltipField = col;
+        }
+
+        let currentlyDisplayedInfo = `${col}\n${secondaryHeaders[col] || ''}`.trim();
+        if (def.headerName !== col) {
+            def.headerTooltip = `${def.headerName}\n\n${currentlyDisplayedInfo}`;
+        } else {
+            def.headerTooltip = currentlyDisplayedInfo;
         }
 
         return def;
