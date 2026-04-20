@@ -8,6 +8,7 @@ let currentPresetId = 'base';
 let currentDictionary = {};
 let truncateDesc = true;
 let highlightChanges = (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_HIGHLIGHT_CHANGES !== undefined) ? CONFIG.DEFAULT_HIGHLIGHT_CHANGES : true;
+let hideInvariantColumns = false;
 let currentExclusions = [];
 let currentRowFilters = [];
 let tempRowFilters = [];
@@ -220,6 +221,15 @@ function initEventListeners() {
             if (gridApi) {
                 gridApi.redrawRows();
             }
+        });
+    }
+
+    const chkHideInvariant = document.getElementById('chkHideInvariant');
+    if (chkHideInvariant) {
+        chkHideInvariant.checked = hideInvariantColumns;
+        chkHideInvariant.addEventListener('change', (e) => {
+            hideInvariantColumns = e.target.checked;
+            updateInvariantColumnsVisibility();
         });
     }
 
@@ -469,7 +479,7 @@ function initAgGrid() {
     const gridOptions = {
         columnDefs: generateColumnDefs('base'),
         rowData: rawData,
-        headerHeight: 300,
+        headerHeight: 400,
         floatingFiltersHeight: 50,
         enableBrowserTooltips: true,
         defaultColDef: {
@@ -478,6 +488,9 @@ function initAgGrid() {
             floatingFilter: true,
             resizable: true,
             minWidth: 5
+        },
+        onFilterChanged: () => {
+            updateInvariantColumnsVisibility();
         },
         pagination: false,
         paginationPageSize: 100,
@@ -618,12 +631,73 @@ function generateColumnDefs(presetId) {
     });
 }
 
+function updateInvariantColumnsVisibility() {
+    if (!gridApi) return;
+
+    let colsToShow = [];
+    if (presets[currentPresetId]) {
+        colsToShow = sanitizeColumnsForCurrentData(presets[currentPresetId].columns);
+    }
+    if (!colsToShow || colsToShow.length === 0) {
+        colsToShow = [...allColumns];
+    }
+
+    if (!hideInvariantColumns) {
+        gridApi.setColumnsVisible(colsToShow, true);
+        return;
+    }
+
+    let filterModel = gridApi.getFilterModel() || {};
+    let activeFilteredColumns = Object.keys(filterModel);
+
+    let visibleRows = [];
+    gridApi.forEachNodeAfterFilter(node => {
+        if (node.data) visibleRows.push(node.data);
+    });
+
+    if (visibleRows.length === 0 && rawData && rawData.length > 0) {
+        visibleRows = rawData;
+    }
+
+    if (visibleRows.length > 0) {
+        let colsToHide = [];
+        let colsToKeep = [];
+        
+        colsToShow.forEach(col => {
+            if (activeFilteredColumns.includes(col)) {
+                colsToKeep.push(col);
+                return;
+            }
+
+            let firstVal = visibleRows[0][col];
+            let hasVariation = false;
+            for (let i = 1; i < visibleRows.length; i++) {
+                if (visibleRows[i][col] !== firstVal) {
+                    hasVariation = true;
+                    break;
+                }
+            }
+
+            if (!hasVariation) {
+                colsToHide.push(col);
+            } else {
+                colsToKeep.push(col);
+            }
+        });
+
+        if (colsToKeep.length > 0) gridApi.setColumnsVisible(colsToKeep, true);
+        if (colsToHide.length > 0) gridApi.setColumnsVisible(colsToHide, false);
+    }
+}
+
 function applyPresetToGrid() {
     if (!gridApi) return;
     updateActionButtonsState();
 
     const newColDefs = generateColumnDefs(currentPresetId);
     gridApi.setGridOption('columnDefs', newColDefs);
+
+    updateInvariantColumnsVisibility();
 
     setTimeout(() => {
         if (!gridApi) return;
@@ -1137,9 +1211,51 @@ function importExclusions(e) {
 }
 
 // --- Row Filter Management ---
+function populateLongDescDatalist() {
+    let datalist = document.getElementById('longDescSuggestions');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'longDescSuggestions';
+        document.body.appendChild(datalist);
+    }
+
+    datalist.innerHTML = '';
+
+    if (!rawDataAllRows || rawDataAllRows.length === 0) return;
+
+    const longDescKey = findLongDescriptionKey(rawDataAllRows.find(r => r && Object.keys(r).length > 0));
+    if (!longDescKey) return;
+
+    const descSet = new Set();
+    rawDataAllRows.forEach(row => {
+        if (row[longDescKey]) {
+            let val = String(row[longDescKey]);
+            if (truncateDesc) {
+                const dashIndex = val.indexOf(' - ');
+                if (dashIndex !== -1) {
+                    val = val.substring(0, dashIndex);
+                }
+            }
+            val = val.trim();
+            if (val) descSet.add(val);
+        }
+    });
+
+    const uniqueDesc = Array.from(descSet).sort();
+
+    const frag = document.createDocumentFragment();
+    uniqueDesc.forEach(desc => {
+        const opt = document.createElement('option');
+        opt.value = desc;
+        frag.appendChild(opt);
+    });
+    datalist.appendChild(frag);
+}
+
 function openRowFilterModal() {
     rowFilterSearchInput.value = '';
     tempRowFilters = [...currentRowFilters];
+    populateLongDescDatalist();
     renderRowFilterTable();
     rowFilterModal.classList.add('active');
 }
@@ -1167,10 +1283,15 @@ function renderRowFilterTable() {
 
         const isHighlight = currentAction === 'highlight';
 
+        const listAttr = pattern.length >= 3 ? 'list="longDescSuggestions"' : '';
+        const safePattern = pattern.replace(/"/g, '&quot;');
+
         html += `
             <tr>
                 <td>
-                    <input type="text" class="dict-input" value="${pattern}" 
+                    <input type="text" class="dict-input" value="${safePattern}" 
+                           ${listAttr}
+                           oninput="handleRowFilterInput(${originalIndex}, this)"
                            onchange="updateRowFilterPattern(${originalIndex}, this.value)" 
                            placeholder="Stringa da cercare...">
                 </td>
@@ -1193,6 +1314,21 @@ function renderRowFilterTable() {
     });
     rowFilterTableBody.innerHTML = html;
 }
+
+window.handleRowFilterInput = function (index, inputElement) {
+    const newVal = inputElement.value;
+    window.updateRowFilterPattern(index, newVal);
+
+    if (newVal.length >= 3) {
+        if (!inputElement.hasAttribute('list')) {
+            inputElement.setAttribute('list', 'longDescSuggestions');
+        }
+    } else {
+        if (inputElement.hasAttribute('list')) {
+            inputElement.removeAttribute('list');
+        }
+    }
+};
 
 window.updateRowFilterAction = function (index, newVal) {
     if (tempRowFilters[index]) {
