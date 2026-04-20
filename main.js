@@ -703,9 +703,7 @@ function applyPresetToGrid() {
 
     setTimeout(() => {
         if (!gridApi) return;
-        const colsToAutoSize = newColDefs
-            .map(c => c.field)
-            .filter(c => MANDATORY_COLUMNS.includes(c.toUpperCase()))
+        const colsToAutoSize = newColDefs.map(c => c.field);
         if (colsToAutoSize.length > 0) {
             gridApi.autoSizeColumns(colsToAutoSize);
         }
