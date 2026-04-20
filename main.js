@@ -1413,9 +1413,47 @@ function exportGridData() {
         alert("Nessun dato caricato da esportare.");
         return;
     }
-    const today = new Date().toISOString().slice(0, 10);
-    gridApi.exportDataAsCsv({
-        fileName: `export_tabella_${today}.csv`,
-        columnSeparator: ';' // Formato ottimizzato per Excel in locale (separatore europeo)
+
+    if (typeof XLSX === 'undefined') {
+        alert("Errore: Libreria Excel (SheetJS) non caricata.");
+        return;
+    }
+
+    const exportData = [];
+    const visibleCols = gridApi.getAllDisplayedColumns();
+    const headers = visibleCols.map(col => {
+        let colDef = col.getColDef();
+        return colDef.headerName || colDef.field;
     });
+    
+    exportData.push(headers);
+    
+    gridApi.forEachNodeAfterFilterAndSort(node => {
+        if (node.data) {
+            const rowData = [];
+            visibleCols.forEach(col => {
+                let colDef = col.getColDef();
+                let field = colDef.field;
+                let cellValue = node.data[field];
+                
+                if (colDef.valueFormatter) {
+                    try {
+                        cellValue = colDef.valueFormatter({value: cellValue, data: node.data, node: node, colDef: colDef});
+                    } catch (e) {
+                         // Fallback al valore grezzo in caso di errore
+                    }
+                }
+
+                rowData.push(cellValue !== undefined && cellValue !== null ? cellValue : "");
+            });
+            exportData.push(rowData);
+        }
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Diagnostica");
+    
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `export_tabella_${today}.xlsx`);
 }
