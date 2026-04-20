@@ -112,6 +112,7 @@ const btnExclusions = document.getElementById('btnExclusions');
 const btnExport = document.getElementById('btnExportPresets');
 const importInput = document.getElementById('importPresetInput');
 const btnRowFilters = document.getElementById('btnRowFilters');
+const btnExportGrid = document.getElementById('btnExportGrid');
 
 const myGrid = document.getElementById('myGrid');
 const emptyState = document.getElementById('emptyState');
@@ -240,6 +241,7 @@ function initEventListeners() {
     btnDictionary.addEventListener('click', openDictModal);
     btnExclusions.addEventListener('click', openExclusionModal);
     btnRowFilters.addEventListener('click', openRowFilterModal);
+    if (btnExportGrid) btnExportGrid.addEventListener('click', exportGridData);
 
     btnExport.addEventListener('click', exportPresets);
     importInput.addEventListener('change', importPresets);
@@ -1403,4 +1405,17 @@ function importRowFilters(e) {
     };
     reader.readAsText(file);
     e.target.value = ''; // Reset
+}
+
+// --- Export Grid Data ---
+function exportGridData() {
+    if (!gridApi) {
+        alert("Nessun dato caricato da esportare.");
+        return;
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    gridApi.exportDataAsCsv({
+        fileName: `export_tabella_${today}.csv`,
+        columnSeparator: ';' // Formato ottimizzato per Excel in locale (separatore europeo)
+    });
 }
