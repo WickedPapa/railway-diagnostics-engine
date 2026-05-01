@@ -481,7 +481,7 @@ function initAgGrid() {
     const gridOptions = {
         columnDefs: generateColumnDefs('base'),
         rowData: rawData,
-        headerHeight: 400,
+        headerHeight: 350,
         floatingFiltersHeight: 50,
         enableBrowserTooltips: true,
         defaultColDef: {
