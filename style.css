@@ -452,6 +452,14 @@ body {
     border: 1px solid var(--border-color);
 }
 
+/* Alternating Column Colors */
+.col-even {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+.col-odd {
+    background-color: transparent;
+}
+
 
 /* Vertical Headers styling for S_ columns */
 .vertical-header .ag-header-cell-label {

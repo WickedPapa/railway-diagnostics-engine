@@ -561,9 +561,13 @@ function generateColumnDefs(presetId) {
         });
     }
 
-    return colsToShow.map(col => {
+    return colsToShow.map((col, index) => {
         let def = { field: col, headerName: col };
         let colUpper = col.toUpperCase();
+        let colClass = index % 2 === 0 ? 'col-even' : 'col-odd';
+        
+        def.cellClass = [colClass];
+        def.headerClass = [colClass];
 
         if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO' || colUpper === 'TSTAMP') {
             def.valueFormatter = (params) => {
@@ -581,7 +585,7 @@ function generateColumnDefs(presetId) {
             };
         } else if (colUpper === 'LONG_DESCRIPTION') {
             def.width = 200;
-            def.cellClass = 'left-aligned-cell';
+            def.cellClass.push('left-aligned-cell');
             def.valueFormatter = (params) => {
                 if (params.value && typeof params.value === 'string' && truncateDesc) {
                     const dashIndex = params.value.indexOf(' - ');
@@ -592,7 +596,7 @@ function generateColumnDefs(presetId) {
                 return params.value;
             };
         } else if (colUpper.startsWith('S_')) {
-            def.headerClass = 'vertical-header';
+            def.headerClass.push('vertical-header');
             def.width = 60;
             def.cellClassRules = {
                 'highlight-change': (params) => {
