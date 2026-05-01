@@ -32,6 +32,14 @@ const DEFAULT_DICTIONARY = [
     "ordine_cabina": 4
   },
   {
+    "nome_colonna": "TSTAMP",
+    "descrizione_custom": "TSTAMP",
+    "ordine_custom": 5,
+    "ordine_funzione": 5,
+    "ordine_apparato": 5,
+    "ordine_cabina": 5
+  },
+  {
     "nome_colonna": "S_ACE1_ACE1_IAOIKSTATUS",
     "descrizione_dmms": "Status of the three phases line contactor (1=close",
     "descrizione_custom": "ACE1:Contattore Linea Trifase",

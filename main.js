@@ -569,6 +569,11 @@ function generateColumnDefs(presetId) {
         def.cellClass = [colClass];
         def.headerClass = [colClass];
 
+        let dictEntry = currentDictionary[colUpper] || currentDictionary[col];
+        if (dictEntry && dictEntry.ordine_custom != null && dictEntry.ordine_custom >= 1 && dictEntry.ordine_custom <= 100) {
+            def.pinned = 'left';
+        }
+
         if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO' || colUpper === 'TSTAMP') {
             def.valueFormatter = (params) => {
                 if (params.value && typeof params.value === 'string') {
