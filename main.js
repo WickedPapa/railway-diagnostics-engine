@@ -112,6 +112,7 @@ const btnExclusions = document.getElementById('btnExclusions');
 const btnExport = document.getElementById('btnExportPresets');
 const importInput = document.getElementById('importPresetInput');
 const btnRowFilters = document.getElementById('btnRowFilters');
+const btnColumnFilters = document.getElementById('btnColumnFilters');
 const btnExportGrid = document.getElementById('btnExportGrid');
 
 const myGrid = document.getElementById('myGrid');
@@ -167,6 +168,21 @@ const rowFilterSearchInput = document.getElementById('rowFilterSearchInput');
 const rowFilterTableBody = document.getElementById('rowFilterTableBody');
 const btnAddRowFilter = document.getElementById('btnAddRowFilter');
 
+// Column Filter Modal Elements
+const columnFilterModal = document.getElementById('columnFilterModal');
+const btnCloseColumnFilterModal = document.getElementById('btnCloseColumnFilterModal');
+const btnCancelColumnFilterModal = document.getElementById('btnCancelColumnFilterModal');
+const btnSaveColumnFilters = document.getElementById('btnSaveColumnFilters');
+const btnResetColumnFilters = document.getElementById('btnResetColumnFilters');
+const btnExportColumnFilters = document.getElementById('btnExportColumnFilters');
+const importColumnFiltersInput = document.getElementById('importColumnFiltersInput');
+const columnFilterSearchInput = document.getElementById('columnFilterSearchInput');
+const columnFilterTableBody = document.getElementById('columnFilterTableBody');
+const btnAddColumnFilter = document.getElementById('btnAddColumnFilter');
+
+let currentColumnFilters = [];
+let tempColumnFilters = [];
+
 // Modal state
 let modalMode = 'clone'; // 'clone' or 'edit'
 let editingPresetId = null;
@@ -182,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initExclusions();
     initRowFilters();
+    initColumnFilters();
     initDictionary();
     loadPresetsFromStorage();
     updatePresetDropdown();
@@ -241,6 +258,7 @@ function initEventListeners() {
     btnDictionary.addEventListener('click', openDictModal);
     btnExclusions.addEventListener('click', openExclusionModal);
     btnRowFilters.addEventListener('click', openRowFilterModal);
+    btnColumnFilters.addEventListener('click', openColumnFilterModal);
     if (btnExportGrid) btnExportGrid.addEventListener('click', exportGridData);
 
     btnExport.addEventListener('click', exportPresets);
@@ -305,6 +323,24 @@ function initEventListeners() {
     rowFilterSearchInput.addEventListener('input', renderRowFilterTable);
     btnExportRowFilters.addEventListener('click', exportRowFilters);
     importRowFiltersInput.addEventListener('change', importRowFilters);
+
+    // Column Filter Modal
+    btnCloseColumnFilterModal.addEventListener('click', closeColumnFilterModal);
+    btnCancelColumnFilterModal.addEventListener('click', closeColumnFilterModal);
+    btnSaveColumnFilters.addEventListener('click', saveColumnFiltersChanges);
+    btnAddColumnFilter.addEventListener('click', addColumnFilter);
+    btnResetColumnFilters.addEventListener('click', () => {
+        if (confirm("Vuoi davvero svuotare tutti i filtri colonne correnti? L'azione verrà applicata subito.")) {
+            tempColumnFilters = [];
+            currentColumnFilters = [];
+            saveColumnFiltersToStorage();
+            applyPresetToGrid();
+            closeColumnFilterModal();
+        }
+    });
+    columnFilterSearchInput.addEventListener('input', renderColumnFilterTable);
+    btnExportColumnFilters.addEventListener('click', exportColumnFilters);
+    importColumnFiltersInput.addEventListener('change', importColumnFilters);
 }
 
 // --- Storage Management Exclusions ---
@@ -364,6 +400,31 @@ function initRowFilters() {
 function saveRowFiltersToStorage() {
     localStorage.setItem('csvRowFilters', JSON.stringify(currentRowFilters));
 }
+
+// --- Storage Management Column Filters ---
+function initColumnFilters() {
+    const saved = localStorage.getItem('csvColumnFilters');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            currentColumnFilters = Array.isArray(parsed) ? parsed.map(f => {
+                if (typeof f === 'string') return { pattern: f, color: '#58a6ff' };
+                if (!f.color) f.color = '#58a6ff';
+                return f;
+            }) : [];
+            return;
+        } catch (err) {
+            console.error("Errore initColumnFilters:", err);
+        }
+    }
+    currentColumnFilters = [];
+    saveColumnFiltersToStorage();
+}
+
+function saveColumnFiltersToStorage() {
+    localStorage.setItem('csvColumnFilters', JSON.stringify(currentColumnFilters));
+}
+
 
 // --- Storage Management Dictionary ---
 function initDictionary() {
@@ -570,6 +631,25 @@ function generateColumnDefs(presetId) {
         def.headerClass = [colClass];
 
         let dictEntry = currentDictionary[colUpper] || currentDictionary[col];
+        let alias = dictEntry ? (dictEntry.alias || '') : '';
+        
+        let cellStyle = null;
+        if (currentColumnFilters && currentColumnFilters.length > 0) {
+            for (const rule of currentColumnFilters) {
+                if (rule.pattern && rule.color) {
+                    const p = rule.pattern.toLowerCase();
+                    if (col.toLowerCase().includes(p) || alias.toLowerCase().includes(p)) {
+                        cellStyle = { backgroundColor: rule.color + '44' };
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (cellStyle) {
+            def.cellStyle = cellStyle;
+        }
+
         if (dictEntry && dictEntry.ordine_custom != null && dictEntry.ordine_custom >= 1 && dictEntry.ordine_custom <= 100) {
             def.pinned = 'left';
         }
@@ -1415,6 +1495,123 @@ function importRowFilters(e) {
             }
         } catch (err) {
             alert("Errore durante l'importazione dei filtri riga.");
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset
+}
+
+// --- Column Filters Modal Logic ---
+function openColumnFilterModal() {
+    columnFilterSearchInput.value = '';
+    tempColumnFilters = JSON.parse(JSON.stringify(currentColumnFilters));
+    renderColumnFilterTable();
+    columnFilterModal.classList.add('active');
+}
+
+function closeColumnFilterModal() {
+    columnFilterModal.classList.remove('active');
+}
+
+function renderColumnFilterTable() {
+    const filterText = columnFilterSearchInput.value.toLowerCase();
+    const filteredRowsIndices = [];
+    tempColumnFilters.forEach((item, index) => {
+        const p = (item && item.pattern) ? item.pattern : '';
+        if (p.toLowerCase().includes(filterText)) {
+            filteredRowsIndices.push(index);
+        }
+    });
+
+    let html = '';
+    filteredRowsIndices.forEach(originalIndex => {
+        const rule = tempColumnFilters[originalIndex];
+        const pattern = rule.pattern || '';
+        const currentColor = rule.color || '#58a6ff';
+        const safePattern = pattern.replace(/"/g, '&quot;');
+
+        html += `
+            <tr>
+                <td>
+                    <input type="text" class="dict-input" value="${safePattern}" 
+                           oninput="updateColumnFilterPattern(${originalIndex}, this.value)" 
+                           placeholder="Stringa da cercare nel nome o alias...">
+                </td>
+                <td>
+                    <input type="color" class="color-picker-input" value="${currentColor}" 
+                           onchange="updateColumnFilterColor(${originalIndex}, this.value)">
+                </td>
+                <td style="text-align: center;">
+                    <button class="btn icon-btn danger-hover" onclick="removeColumnFilter(${originalIndex})" title="Rimuovi regola">🗑</button>
+                </td>
+            </tr>
+        `;
+    });
+    columnFilterTableBody.innerHTML = html;
+}
+
+window.updateColumnFilterPattern = function (index, newVal) {
+    if (tempColumnFilters[index]) {
+        tempColumnFilters[index].pattern = newVal;
+    }
+};
+
+window.updateColumnFilterColor = function (index, newVal) {
+    if (tempColumnFilters[index]) {
+        tempColumnFilters[index].color = newVal;
+    }
+};
+
+window.removeColumnFilter = function (index) {
+    tempColumnFilters.splice(index, 1);
+    renderColumnFilterTable();
+};
+
+function addColumnFilter() {
+    tempColumnFilters.push({ pattern: '', color: '#58a6ff' });
+    renderColumnFilterTable();
+}
+
+function saveColumnFiltersChanges() {
+    currentColumnFilters = JSON.parse(JSON.stringify(tempColumnFilters));
+    saveColumnFiltersToStorage();
+    closeColumnFilterModal();
+    applyPresetToGrid();
+}
+
+function exportColumnFilters() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentColumnFilters, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "column_filters_export.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function importColumnFilters(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+        try {
+            const imported = JSON.parse(event.target.result);
+            if (imported && Array.isArray(imported)) {
+                imported.forEach(item => {
+                    if (typeof item === 'string') {
+                        tempColumnFilters.push({ pattern: item.trim(), color: '#58a6ff' });
+                    } else if (item && item.pattern) {
+                        tempColumnFilters.push(item);
+                    }
+                });
+                renderColumnFilterTable();
+                alert("Regole colonne importate. Premi \"Salva e Applica\" per confermare.");
+            } else {
+                alert("Il file non contiene un formato valido per i filtri colonne.");
+            }
+        } catch (err) {
+            alert("Errore durante l'importazione delle regole colonne.");
         }
     };
     reader.readAsText(file);

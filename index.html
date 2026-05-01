@@ -113,6 +113,9 @@
                     <button id="btnRowFilters" class="btn icon-btn" title="Gestore Filtri Righe (LONG_DESCRIPTION)">
                         Filtra Righe
                     </button>
+                    <button id="btnColumnFilters" class="btn icon-btn" title="Gestore Colori Colonne">
+                        Colora Colonne
+                    </button>
                     <div class="separator"></div>
                     <button id="btnExportGrid" class="btn icon-btn" title="Esporta Tabella Attuale"
                         style="color: #4caf50;">
@@ -305,6 +308,62 @@
                 </button>
                 <button id="btnCancelRowFilterModal" class="btn secondary-btn">Annulla</button>
                 <button id="btnSaveRowFilters" class="btn primary-btn">Salva e Applica</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Column Filters -->
+    <div id="columnFilterModal" class="modal-overlay">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 3h18v18H3z"></path>
+                        <path d="M9 3v18"></path>
+                        <path d="M15 3v18"></path>
+                    </svg>
+                    Colora Colonne
+                </h2>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="btnAddColumnFilter" class="btn icon-btn" title="Aggiungi Regola Colore">➕</button>
+                    <div class="separator"></div>
+                    <button id="btnExportColumnFilters" class="btn icon-btn" title="Esporta Regole Colonne">⭳</button>
+                    <label for="importColumnFiltersInput" class="btn icon-btn" title="Importa Regole Colonne"
+                        style="cursor: pointer; margin:0;">⭱</label>
+                    <input type="file" id="importColumnFiltersInput" accept=".json" style="display: none;">
+                    <button id="btnCloseColumnFilterModal" class="btn-close">×</button>
+                </div>
+            </div>
+
+            <div class="modal-body dict-modal-body">
+                <div class="search-box">
+                    <input type="text" id="columnFilterSearchInput" placeholder="Cerca stringa filtro..."
+                        class="input-light dict-search">
+                    <span class="search-icon" style="left: 10px; top: 10px;">🔍</span>
+                </div>
+                <div class="dict-table-wrapper">
+                    <table class="dict-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 60%">Stringa (Nome/Alias)</th>
+                                <th style="width: 30%">Colore</th>
+                                <th style="width: 10%; text-align: center;">Elimina</th>
+                            </tr>
+                        </thead>
+                        <tbody id="columnFilterTableBody">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btnResetColumnFilters" class="btn secondary-btn danger-hover" style="margin-right: auto;">
+                    Svuota Tutto
+                </button>
+                <button id="btnCancelColumnFilterModal" class="btn secondary-btn">Annulla</button>
+                <button id="btnSaveColumnFilters" class="btn primary-btn">Salva e Applica</button>
             </div>
         </div>
     </div>
