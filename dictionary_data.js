@@ -1,7 +1,7 @@
 const DEFAULT_DICTIONARY = [
   {
-    "nome_colonna": "VEHICLE",
-    "descrizione_custom": "N",
+    "nome_colonna": "THING",
+    "descrizione_custom": "VEH",
     "ordine_custom": 1,
     "ordine_funzione": 1,
     "ordine_apparato": 1,

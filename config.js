@@ -7,5 +7,5 @@ const CONFIG = {
     DEFAULT_HIGHLIGHT_CHANGES: true,
 
     // Colonne di base obbligatorie da bloccare e mostrare sempre
-    MANDATORY_COLUMNS: ['VEHICLE', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION', 'TSTAMP']
+    MANDATORY_COLUMNS: ['THING', 'TIMESTAMP', 'SOURCE', 'LONG_DESCRIPTION', 'TSTAMP']
 };

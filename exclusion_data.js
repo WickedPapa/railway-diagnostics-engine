@@ -1,5 +1,5 @@
 const DEFAULT_EXCLUSIONS = [
-    "THING",
+    "VEHICLE",
     "FLEET",
     "BASELINE",
     "CUID",

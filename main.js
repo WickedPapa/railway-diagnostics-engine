@@ -565,10 +565,17 @@ function generateColumnDefs(presetId) {
         let def = { field: col, headerName: col };
         let colUpper = col.toUpperCase();
 
-        if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO') {
+        if (colUpper === 'TIMESTAMP' || colUpper === 'TIMESTAMP BORDO' || colUpper === 'TSTAMP') {
             def.valueFormatter = (params) => {
                 if (params.value && typeof params.value === 'string') {
                     return params.value.replace(/(\.\d)\d+$/, '$1');
+                }
+                return params.value;
+            };
+        } else if (colUpper === 'THING') {
+            def.valueFormatter = (params) => {
+                if (params.value && typeof params.value === 'string') {
+                    return params.value.slice(-3);
                 }
                 return params.value;
             };
@@ -664,7 +671,7 @@ function updateInvariantColumnsVisibility() {
     if (visibleRows.length > 0) {
         let colsToHide = [];
         let colsToKeep = [];
-        
+
         colsToShow.forEach(col => {
             if (activeFilteredColumns.includes(col)) {
                 colsToKeep.push(col);
@@ -1423,9 +1430,9 @@ function exportGridData() {
         let colDef = col.getColDef();
         return colDef.headerName || colDef.field;
     });
-    
+
     exportData.push(headers);
-    
+
     gridApi.forEachNodeAfterFilterAndSort(node => {
         if (node.data) {
             const rowData = [];
@@ -1433,12 +1440,12 @@ function exportGridData() {
                 let colDef = col.getColDef();
                 let field = colDef.field;
                 let cellValue = node.data[field];
-                
+
                 if (colDef.valueFormatter) {
                     try {
-                        cellValue = colDef.valueFormatter({value: cellValue, data: node.data, node: node, colDef: colDef});
+                        cellValue = colDef.valueFormatter({ value: cellValue, data: node.data, node: node, colDef: colDef });
                     } catch (e) {
-                         // Fallback al valore grezzo in caso di errore
+                        // Fallback al valore grezzo in caso di errore
                     }
                 }
 
@@ -1451,7 +1458,7 @@ function exportGridData() {
     const ws = XLSX.utils.aoa_to_sheet(exportData);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Diagnostica");
-    
+
     const today = new Date().toISOString().slice(0, 10);
     XLSX.writeFile(wb, `export_tabella_${today}.xlsx`);
 }

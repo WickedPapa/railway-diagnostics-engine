@@ -462,12 +462,19 @@ body {
     align-items: center;
     overflow: visible;
     font-size: 13px;
+    gap: 4px;
 }
 
 .vertical-header .ag-header-cell-text {
     white-space: nowrap;
     overflow: visible;
     text-overflow: clip;
+    order: 2;
+}
+
+.vertical-header .ag-header-icon,
+.vertical-header .ag-sort-indicator-container {
+    order: 1 !important;
 }
 
 /* Dictionary Modal specific styles */
