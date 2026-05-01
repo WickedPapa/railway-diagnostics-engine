@@ -9,6 +9,7 @@ let currentDictionary = {};
 let truncateDesc = true;
 let highlightChanges = (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_HIGHLIGHT_CHANGES !== undefined) ? CONFIG.DEFAULT_HIGHLIGHT_CHANGES : true;
 let hideInvariantColumns = false;
+let useAliasForHeaders = false;
 let currentExclusions = [];
 let currentRowFilters = [];
 let tempRowFilters = [];
@@ -248,6 +249,15 @@ function initEventListeners() {
         chkHideInvariant.addEventListener('change', (e) => {
             hideInvariantColumns = e.target.checked;
             updateInvariantColumnsVisibility();
+        });
+    }
+
+    const chkUseAliasForHeaders = document.getElementById('chkUseAliasForHeaders');
+    if (chkUseAliasForHeaders) {
+        chkUseAliasForHeaders.checked = useAliasForHeaders;
+        chkUseAliasForHeaders.addEventListener('change', (e) => {
+            useAliasForHeaders = e.target.checked;
+            applyPresetToGrid();
         });
     }
 
@@ -737,14 +747,11 @@ function generateColumnDefs(presetId) {
         let customAlias = (currentDictionary[colUpper] && currentDictionary[colUpper].alias) ? currentDictionary[colUpper].alias :
             ((currentDictionary[col] && currentDictionary[col].alias) ? currentDictionary[col].alias : null);
 
-        if (customAlias) {
+        if (useAliasForHeaders && customAlias) {
             def.headerName = customAlias;
-            def.tooltipField = col; // Cells show actual row value on hover
         } else {
             def.headerName = col;
-            if (colUpper === 'LONG_DESCRIPTION') def.tooltipField = col;
         }
-
         let currentlyDisplayedInfo = `${col}\n${secondaryHeaders[col] || ''}`.trim();
         if (def.headerName !== col) {
             def.headerTooltip = `${def.headerName}\n\n${currentlyDisplayedInfo}`;
