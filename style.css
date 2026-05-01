@@ -46,6 +46,8 @@ body {
     justify-content: space-between;
     padding: 12px 24px;
     z-index: 10;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .logo {
@@ -68,6 +70,7 @@ body {
     display: flex;
     gap: 20px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 /* File Loader */
@@ -131,6 +134,7 @@ body {
     border-left: 1px solid var(--border-color);
     padding-left: 20px;
     transition: opacity 0.3s ease;
+    flex-wrap: wrap;
 }
 
 .preset-controls.disabled-when-empty {
