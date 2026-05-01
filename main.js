@@ -601,7 +601,29 @@ function getSortOrderValue(colName, sortType) {
     return currentDictionary[colName][sortType];
 }
 
+function updateDynamicColumnStyles() {
+    let styleTag = document.getElementById('dynamicColumnStyles');
+    if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'dynamicColumnStyles';
+        document.head.appendChild(styleTag);
+    }
+    
+    let cssRules = '';
+    if (currentColumnFilters && currentColumnFilters.length > 0) {
+        currentColumnFilters.forEach((rule) => {
+            if (rule.color) {
+                const colorHex = rule.color.replace('#', '');
+                cssRules += `.bg-filter-${colorHex} { background-color: ${rule.color}44 !important; }\n`;
+            }
+        });
+    }
+    styleTag.innerHTML = cssRules;
+}
+
 function generateColumnDefs(presetId) {
+    updateDynamicColumnStyles();
+
     let colsToShow = [...allColumns];
     if (presets[presetId]) {
         colsToShow = sanitizeColumnsForCurrentData(presets[presetId].columns);
@@ -634,12 +656,14 @@ function generateColumnDefs(presetId) {
         let alias = dictEntry ? (dictEntry.alias || '') : '';
         
         let cellStyle = null;
+        let headerColorClass = null;
         if (currentColumnFilters && currentColumnFilters.length > 0) {
             for (const rule of currentColumnFilters) {
                 if (rule.pattern && rule.color) {
                     const p = rule.pattern.toLowerCase();
                     if (col.toLowerCase().includes(p) || alias.toLowerCase().includes(p)) {
                         cellStyle = { backgroundColor: rule.color + '44' };
+                        headerColorClass = 'bg-filter-' + rule.color.replace('#', '');
                         break;
                     }
                 }
@@ -648,6 +672,9 @@ function generateColumnDefs(presetId) {
 
         if (cellStyle) {
             def.cellStyle = cellStyle;
+        }
+        if (headerColorClass) {
+            def.headerClass.push(headerColorClass);
         }
 
         if (dictEntry && dictEntry.ordine_custom != null && dictEntry.ordine_custom >= 1 && dictEntry.ordine_custom <= 100) {
