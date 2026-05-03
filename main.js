@@ -581,7 +581,7 @@ function initAgGrid() {
                 
                 const colsToAutoSize = window.currentGridColIds.filter(id => !userResizedColumns.has(id));
                 if (colsToAutoSize.length > 0) {
-                    params.api.autoSizeColumns(colsToAutoSize);
+                    params.api.autoSizeColumns(colsToAutoSize, true);
                 }
             }, 150);
         },
@@ -859,7 +859,7 @@ function applyPresetToGrid() {
         if (!gridApi) return;
         const colsToAutoSize = window.currentGridColIds;
         if (colsToAutoSize.length > 0) {
-            gridApi.autoSizeColumns(colsToAutoSize);
+            gridApi.autoSizeColumns(colsToAutoSize, true);
         }
     }, 150);
 }
