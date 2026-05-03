@@ -554,6 +554,7 @@ function handleFileUpload(e) {
     loadingOverlay.style.display = 'flex';
     loadingOverlay.classList.add('active');
     emptyState.style.display = 'none';
+    userResizedColumns.clear();
 
     Papa.parse(file, {
         header: true,
@@ -605,10 +606,13 @@ function initAgGrid() {
             updateInvariantColumnsVisibility();
         },
         onColumnResized: (params) => {
-            if (params.source === 'uiColumnDragged' && params.column) {
-                userResizedColumns.add(params.column.getColId());
-            } else if (params.source === 'uiColumnDragged' && params.columns) {
-                params.columns.forEach(c => userResizedColumns.add(c.getColId()));
+            if (params.source === 'uiColumnDragged' || params.source === 'uiColumnResized') {
+                if (params.column) {
+                    userResizedColumns.add(params.column.getColId());
+                }
+                if (params.columns) {
+                    params.columns.forEach(c => userResizedColumns.add(c.getColId()));
+                }
             }
         },
         onVirtualColumnsChanged: (params) => {
@@ -838,6 +842,7 @@ function updateInvariantColumnsVisibility() {
 
     let filterModel = gridApi.getFilterModel() || {};
     let activeFilteredColumns = Object.keys(filterModel);
+    let mandatoryCols = getActiveMandatoryColumns();
 
     let visibleRows = [];
     gridApi.forEachNodeAfterFilter(node => {
@@ -853,7 +858,7 @@ function updateInvariantColumnsVisibility() {
         let colsToKeep = [];
 
         colsToShow.forEach(col => {
-            if (activeFilteredColumns.includes(col)) {
+            if (activeFilteredColumns.includes(col) || mandatoryCols.includes(col)) {
                 colsToKeep.push(col);
                 return;
             }
@@ -883,8 +888,6 @@ function applyPresetToGrid() {
     if (!gridApi) return;
     updateActionButtonsState();
 
-    userResizedColumns.clear();
-
     const newColDefs = generateColumnDefs(currentPresetId);
     gridApi.setGridOption('columnDefs', newColDefs);
 
@@ -894,7 +897,7 @@ function applyPresetToGrid() {
 
     setTimeout(() => {
         if (!gridApi) return;
-        const colsToAutoSize = window.currentGridColIds;
+        const colsToAutoSize = window.currentGridColIds.filter(id => !userResizedColumns.has(id));
         if (colsToAutoSize.length > 0) {
             gridApi.autoSizeColumns(colsToAutoSize, true);
         }

@@ -9,7 +9,7 @@
     <script src="libs/papaparse.min.js"></script>
     <script src="libs/ag-grid-community.min.js"></script>
     <script src="libs/xlsx-js-style.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=3">
     <!-- Google Fonts for typography -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -73,7 +73,8 @@
                             <button id="btnDeletePreset" class="dropdown-item danger-text">🗑 Elimina Corrente</button>
                             <div class="dropdown-divider"></div>
                             <button id="btnExportPresets" class="dropdown-item">⭳ Esporta Tutti</button>
-                            <label for="importPresetInput" class="dropdown-item" style="cursor: pointer; margin:0;">⭱ Importa Preset</label>
+                            <label for="importPresetInput" class="dropdown-item" style="cursor: pointer; margin:0;">⭱
+                                Importa Preset</label>
                             <input type="file" id="importPresetInput" accept=".json" style="display: none;">
                             <div class="dropdown-divider"></div>
                             <button id="btnDeleteAllPresets" class="dropdown-item danger-text">🔥 Svuota Tutto</button>
@@ -105,12 +106,14 @@
                                 <span class="checkmark"></span>
                                 Tronca Descrizione
                             </label>
-                            <label class="dropdown-item custom-checkbox" style="margin: 0;" title="Evidenzia variazioni">
+                            <label class="dropdown-item custom-checkbox" style="margin: 0;"
+                                title="Evidenzia variazioni">
                                 <input type="checkbox" id="chkHighlightChanges">
                                 <span class="checkmark"></span>
                                 Evidenzia Variazioni
                             </label>
-                            <label class="dropdown-item custom-checkbox" style="margin: 0;" title="Nascondi colonne invariate">
+                            <label class="dropdown-item custom-checkbox" style="margin: 0;"
+                                title="Nascondi colonne invariate">
                                 <input type="checkbox" id="chkHideInvariant">
                                 <span class="checkmark"></span>
                                 Nascondi Invariate
@@ -124,8 +127,9 @@
                     </div>
 
                     <div class="separator"></div>
-                    
-                    <button id="btnExportGrid" class="btn icon-btn" title="Esporta Tabella Attuale" style="color: #4caf50;">
+
+                    <button id="btnExportGrid" class="btn icon-btn" title="Esporta Tabella Attuale"
+                        style="color: #4caf50;">
                         ⬇️ Export Excel
                     </button>
                 </div>

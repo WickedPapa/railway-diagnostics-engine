@@ -221,9 +221,7 @@ body {
     top: 100%;
     left: 0;
     margin-top: 4px;
-    background: var(--panel-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--bg-color);
     border: 1px solid var(--border-color);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
     border-radius: 8px;
