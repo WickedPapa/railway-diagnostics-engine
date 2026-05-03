@@ -183,6 +183,8 @@ const btnAddColumnFilter = document.getElementById('btnAddColumnFilter');
 
 let currentColumnFilters = [];
 let tempColumnFilters = [];
+let userResizedColumns = new Set();
+let autoSizeTimeout = null;
 
 // Modal state
 let modalMode = 'clone'; // 'clone' or 'edit'
@@ -565,6 +567,24 @@ function initAgGrid() {
         onFilterChanged: () => {
             updateInvariantColumnsVisibility();
         },
+        onColumnResized: (params) => {
+            if (params.source === 'uiColumnDragged' && params.column) {
+                userResizedColumns.add(params.column.getColId());
+            } else if (params.source === 'uiColumnDragged' && params.columns) {
+                params.columns.forEach(c => userResizedColumns.add(c.getColId()));
+            }
+        },
+        onVirtualColumnsChanged: (params) => {
+            if (autoSizeTimeout) clearTimeout(autoSizeTimeout);
+            autoSizeTimeout = setTimeout(() => {
+                if (!params.api || !window.currentGridColIds) return;
+                
+                const colsToAutoSize = window.currentGridColIds.filter(id => !userResizedColumns.has(id));
+                if (colsToAutoSize.length > 0) {
+                    params.api.autoSizeColumns(colsToAutoSize);
+                }
+            }, 150);
+        },
         pagination: false,
         paginationPageSize: 100,
         animateRows: true,
@@ -826,14 +846,18 @@ function applyPresetToGrid() {
     if (!gridApi) return;
     updateActionButtonsState();
 
+    userResizedColumns.clear();
+
     const newColDefs = generateColumnDefs(currentPresetId);
     gridApi.setGridOption('columnDefs', newColDefs);
+    
+    window.currentGridColIds = newColDefs.map(c => c.field);
 
     updateInvariantColumnsVisibility();
 
     setTimeout(() => {
         if (!gridApi) return;
-        const colsToAutoSize = newColDefs.map(c => c.field);
+        const colsToAutoSize = window.currentGridColIds;
         if (colsToAutoSize.length > 0) {
             gridApi.autoSizeColumns(colsToAutoSize);
         }
