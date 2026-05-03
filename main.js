@@ -240,22 +240,22 @@ function initEventListeners() {
         if (e.target.classList.contains('preset-option')) {
             const newId = e.target.dataset.value;
             setPresetSelection(newId);
-            
+
             const p = presets[currentPresetId];
             const newSort = (p && p.defaultSortOrder) ? p.defaultSortOrder : 'none';
             setSortSelection(newSort);
-            
+
             applyPresetToGrid();
-            
+
             // Chiudi il menu
             const dropdown = e.target.closest('.dropdown');
             if (dropdown) dropdown.classList.remove('active');
         }
-        
+
         if (e.target.classList.contains('sort-option')) {
             setSortSelection(e.target.dataset.value);
             applyPresetToGrid();
-            
+
             // Chiudi il menu
             const dropdown = e.target.closest('.dropdown');
             if (dropdown) dropdown.classList.remove('active');
@@ -316,7 +316,7 @@ function initEventListeners() {
     document.addEventListener('click', (e) => {
         const isDropdownButton = e.target.closest('.dropdown-toggle');
         const isDropdownMenu = e.target.closest('.dropdown-menu');
-        
+
         if (!isDropdownButton && !isDropdownMenu) {
             document.querySelectorAll('.dropdown.active').forEach(dropdown => {
                 dropdown.classList.remove('active');
@@ -327,18 +327,18 @@ function initEventListeners() {
         if (isDropdownButton) {
             const currentDropdown = isDropdownButton.closest('.dropdown');
             const isActive = currentDropdown.classList.contains('active');
-            
+
             document.querySelectorAll('.dropdown.active').forEach(dropdown => {
                 if (dropdown !== currentDropdown) dropdown.classList.remove('active');
             });
-            
+
             if (isActive) {
                 currentDropdown.classList.remove('active');
             } else {
                 currentDropdown.classList.add('active');
             }
         }
-        
+
         if (isDropdownMenu) {
             if (e.target.tagName.toLowerCase() === 'button' && !e.target.classList.contains('dropdown-toggle')) {
                 isDropdownMenu.closest('.dropdown').classList.remove('active');
@@ -562,7 +562,7 @@ function savePresetsToStorage() {
 function updatePresetDropdown() {
     if (!presetDropdownMenu) return;
     presetDropdownMenu.innerHTML = '';
-    
+
     for (const [id, preset] of Object.entries(presets)) {
         const btn = document.createElement('button');
         btn.className = 'dropdown-item preset-option';
@@ -570,7 +570,7 @@ function updatePresetDropdown() {
         btn.textContent = preset.name;
         presetDropdownMenu.appendChild(btn);
     }
-    
+
     setPresetSelection(currentPresetId);
     updateActionButtonsState();
 }
@@ -1789,8 +1789,8 @@ function exportGridData() {
                     g = Math.round(g * p + 255 * (1 - p));
                     b = Math.round(b * p + 255 * (1 - p));
                     return (r < 16 ? "0" : "") + r.toString(16) +
-                           (g < 16 ? "0" : "") + g.toString(16) +
-                           (b < 16 ? "0" : "") + b.toString(16);
+                        (g < 16 ? "0" : "") + g.toString(16) +
+                        (b < 16 ? "0" : "") + b.toString(16);
                 }
                 return hex;
             };
@@ -1827,13 +1827,13 @@ function exportGridData() {
             });
 
             const ws = XLSX.utils.aoa_to_sheet(exportData);
-            
+
             // Configura la larghezza delle colonne e imposta gli stili delle intestazioni
             ws['!cols'] = [];
             visibleCols.forEach((col, colIndex) => {
                 let colDef = col.getColDef();
                 let isVertical = colDef.headerClass && colDef.headerClass.includes('vertical-header');
-                
+
                 // Imposta larghezza
                 if (isVertical) {
                     ws['!cols'].push({ wch: 5 });
@@ -1850,11 +1850,11 @@ function exportGridData() {
                         font: { bold: true },
                         alignment: { vertical: "center", horizontal: "center", wrapText: true }
                     };
-                    
+
                     if (isVertical) {
                         ws[cellRef].s.alignment.textRotation = 90;
                     }
-                    
+
                     if (colDef.headerClass) {
                         let colorClass = colDef.headerClass.find(c => c.startsWith('bg-filter-'));
                         if (colorClass) {
@@ -1926,7 +1926,7 @@ function exportGridData() {
                     if (finalColor) {
                         cellStyle.fill = { fgColor: { rgb: finalColor } };
                     }
-                    
+
                     // Colore alternato per leggibilità
                     if (!finalColor && colDef.cellClass && colDef.cellClass.includes('col-even')) {
                         cellStyle.fill = { fgColor: { rgb: "F8F9FA" } };
