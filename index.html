@@ -44,21 +44,29 @@
             </div>
 
             <div class="preset-controls" id="presetControlsGroup">
-                <div class="select-wrapper">
-                    <select id="presetSelect" class="preset-dropdown">
-                        <option value="base">Base (Tutte le colonne)</option>
+                <!-- Dropdown: Preset (Sostituisce il select nativo) -->
+                <div class="dropdown" id="presetDropdownContainer">
+                    <button class="btn icon-btn dropdown-toggle" title="Seleziona Preset" id="presetDropdownBtn" style="min-width: 180px; justify-content: space-between;">
+                        <span id="presetDropdownLabel">Base (Tutte le colonne)</span> ▾
+                    </button>
+                    <div class="dropdown-menu" id="presetDropdownMenu">
+                        <button class="dropdown-item preset-option" data-value="base">Base (Tutte le colonne)</button>
                         <!-- Dynamic options here -->
-                    </select>
+                    </div>
                 </div>
 
-                <div class="select-wrapper" style="margin-left: 10px; margin-right: 15px;">
-                    <select id="sortSelect" class="preset-dropdown" title="Ordina Tabella">
-                        <option value="none">Nessun ordine</option>
-                        <option value="ordine_custom">Ordine Custom</option>
-                        <option value="ordine_funzione">Ordine Funzione</option>
-                        <option value="ordine_apparato">Ordine Apparato</option>
-                        <option value="ordine_cabina">Ordine Cabina</option>
-                    </select>
+                <!-- Dropdown: Ordinamento (Sostituisce il select nativo) -->
+                <div class="dropdown" id="sortDropdownContainer" style="margin-left: 10px; margin-right: 15px;">
+                    <button class="btn icon-btn dropdown-toggle" title="Ordina Tabella" id="sortDropdownBtn" style="min-width: 150px; justify-content: space-between;">
+                        <span id="sortDropdownLabel">Nessun ordine</span> ▾
+                    </button>
+                    <div class="dropdown-menu" id="sortDropdownMenu">
+                        <button class="dropdown-item sort-option" data-value="none">Nessun ordine</button>
+                        <button class="dropdown-item sort-option" data-value="ordine_custom">Ordine Custom</button>
+                        <button class="dropdown-item sort-option" data-value="ordine_funzione">Ordine Funzione</button>
+                        <button class="dropdown-item sort-option" data-value="ordine_apparato">Ordine Apparato</button>
+                        <button class="dropdown-item sort-option" data-value="ordine_cabina">Ordine Cabina</button>
+                    </div>
                 </div>
 
                 <div class="btn-group">

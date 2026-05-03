@@ -100,9 +100,33 @@ let presets = {
 // --- DOM Elements ---
 const fileInput = document.getElementById('csvFileInput');
 const fileNameDisplay = document.getElementById('fileNameDisplay');
-const presetSelect = document.getElementById('presetSelect');
-const sortSelect = document.getElementById('sortSelect');
+const presetDropdownLabel = document.getElementById('presetDropdownLabel');
+const presetDropdownMenu = document.getElementById('presetDropdownMenu');
+const sortDropdownLabel = document.getElementById('sortDropdownLabel');
+const sortDropdownMenu = document.getElementById('sortDropdownMenu');
 const presetControlsGroup = document.getElementById('presetControlsGroup');
+
+let currentSortOrder = 'none';
+
+function setSortSelection(value) {
+    currentSortOrder = value;
+    const optionBtn = document.querySelector(`.sort-option[data-value="${value}"]`);
+    if (optionBtn) {
+        sortDropdownLabel.textContent = optionBtn.textContent;
+    } else {
+        sortDropdownLabel.textContent = 'Nessun ordine';
+    }
+}
+
+function setPresetSelection(value) {
+    currentPresetId = value;
+    const p = presets[value];
+    if (p) {
+        presetDropdownLabel.textContent = p.name;
+    } else {
+        presetDropdownLabel.textContent = 'Base (Tutte le colonne)';
+    }
+}
 
 const btnClone = document.getElementById('btnClonePreset');
 const btnEdit = document.getElementById('btnEditPreset');
@@ -211,19 +235,31 @@ document.addEventListener('DOMContentLoaded', () => {
 function initEventListeners() {
     fileInput.addEventListener('change', handleFileUpload);
 
-    presetSelect.addEventListener('change', (e) => {
-        currentPresetId = e.target.value;
-        const p = presets[currentPresetId];
-        if (p && p.defaultSortOrder) {
-            sortSelect.value = p.defaultSortOrder;
-        } else {
-            sortSelect.value = 'none';
+    // Event delegation for the new dropdown items
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('preset-option')) {
+            const newId = e.target.dataset.value;
+            setPresetSelection(newId);
+            
+            const p = presets[currentPresetId];
+            const newSort = (p && p.defaultSortOrder) ? p.defaultSortOrder : 'none';
+            setSortSelection(newSort);
+            
+            applyPresetToGrid();
+            
+            // Chiudi il menu
+            const dropdown = e.target.closest('.dropdown');
+            if (dropdown) dropdown.classList.remove('active');
         }
-        applyPresetToGrid();
-    });
-
-    sortSelect.addEventListener('change', () => {
-        applyPresetToGrid();
+        
+        if (e.target.classList.contains('sort-option')) {
+            setSortSelection(e.target.dataset.value);
+            applyPresetToGrid();
+            
+            // Chiudi il menu
+            const dropdown = e.target.closest('.dropdown');
+            if (dropdown) dropdown.classList.remove('active');
+        }
     });
 
     const chkTruncateDesc = document.getElementById('chkTruncateDesc');
@@ -524,14 +560,18 @@ function savePresetsToStorage() {
 }
 
 function updatePresetDropdown() {
-    presetSelect.innerHTML = '';
+    if (!presetDropdownMenu) return;
+    presetDropdownMenu.innerHTML = '';
+    
     for (const [id, preset] of Object.entries(presets)) {
-        const option = document.createElement('option');
-        option.value = id;
-        option.textContent = preset.name;
-        presetSelect.appendChild(option);
+        const btn = document.createElement('button');
+        btn.className = 'dropdown-item preset-option';
+        btn.dataset.value = id;
+        btn.textContent = preset.name;
+        presetDropdownMenu.appendChild(btn);
     }
-    presetSelect.value = currentPresetId;
+    
+    setPresetSelection(currentPresetId);
     updateActionButtonsState();
 }
 
@@ -704,7 +744,7 @@ function generateColumnDefs(presetId) {
         colsToShow = [...allColumns];
     }
 
-    const sortType = sortSelect.value;
+    const sortType = currentSortOrder;
     if (sortType !== 'none') {
         colsToShow.sort((a, b) => {
             const valA = getSortOrderValue(a, sortType);
@@ -1092,9 +1132,8 @@ function savePresetFromModal() {
         presets[newId] = { name: name, columns: finalColumns, defaultSortOrder: orderSelection };
         savePresetsToStorage();
         updatePresetDropdown();
-        presetSelect.value = newId;
-        currentPresetId = newId;
-        sortSelect.value = orderSelection; // apply automatically
+        setPresetSelection(newId);
+        setSortSelection(orderSelection);
     } else if (modalMode === 'edit') {
         if (editingPresetId && presets[editingPresetId]) {
             presets[editingPresetId].name = name;
@@ -1102,7 +1141,7 @@ function savePresetFromModal() {
             presets[editingPresetId].defaultSortOrder = orderSelection;
             savePresetsToStorage();
             updatePresetDropdown();
-            sortSelect.value = orderSelection;
+            setSortSelection(orderSelection);
         }
     }
 
@@ -1117,7 +1156,7 @@ function deleteCurrentPreset() {
         delete presets[currentPresetId];
         savePresetsToStorage();
         currentPresetId = 'base';
-        sortSelect.value = 'none';
+        setSortSelection('none');
         updatePresetDropdown();
         applyPresetToGrid();
     }
@@ -1135,7 +1174,7 @@ function deleteAllPresets() {
         };
         savePresetsToStorage();
         currentPresetId = 'base';
-        sortSelect.value = 'none';
+        setSortSelection('none');
         updatePresetDropdown();
         applyPresetToGrid();
     }
