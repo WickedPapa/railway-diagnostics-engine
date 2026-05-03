@@ -1688,6 +1688,24 @@ function exportGridData() {
         return;
     }
 
+    // Helper per schiarire i colori hex simulando trasparenza su sfondo bianco
+    const lightenColor = (hex) => {
+        hex = hex.replace('#', '');
+        if (hex.length === 6) {
+            let r = parseInt(hex.substring(0, 2), 16);
+            let g = parseInt(hex.substring(2, 4), 16);
+            let b = parseInt(hex.substring(4, 6), 16);
+            const p = 0.4; // 40% del colore originale
+            r = Math.round(r * p + 255 * (1 - p));
+            g = Math.round(g * p + 255 * (1 - p));
+            b = Math.round(b * p + 255 * (1 - p));
+            return (r < 16 ? "0" : "") + r.toString(16) +
+                   (g < 16 ? "0" : "") + g.toString(16) +
+                   (b < 16 ? "0" : "") + b.toString(16);
+        }
+        return hex;
+    };
+
     const exportData = [];
     const visibleCols = gridApi.getAllDisplayedColumns();
     const headers = visibleCols.map(col => {
@@ -1720,6 +1738,117 @@ function exportGridData() {
     });
 
     const ws = XLSX.utils.aoa_to_sheet(exportData);
+    
+    // Configura la larghezza delle colonne e imposta gli stili delle intestazioni
+    ws['!cols'] = [];
+    visibleCols.forEach((col, colIndex) => {
+        let colDef = col.getColDef();
+        let isVertical = colDef.headerClass && colDef.headerClass.includes('vertical-header');
+        
+        // Imposta larghezza
+        if (isVertical) {
+            ws['!cols'].push({ wch: 5 });
+        } else if (colDef.field && colDef.field.toUpperCase() === 'LONG_DESCRIPTION') {
+            ws['!cols'].push({ wch: 60 });
+        } else {
+            ws['!cols'].push({ wch: 18 });
+        }
+
+        // Stile Intestazione
+        let cellRef = XLSX.utils.encode_cell({ c: colIndex, r: 0 });
+        if (ws[cellRef]) {
+            ws[cellRef].s = {
+                font: { bold: true },
+                alignment: { vertical: "center", horizontal: "center", wrapText: true }
+            };
+            
+            if (isVertical) {
+                ws[cellRef].s.alignment.textRotation = 90;
+            }
+            
+            if (colDef.headerClass) {
+                let colorClass = colDef.headerClass.find(c => c.startsWith('bg-filter-'));
+                if (colorClass) {
+                    let hex = colorClass.replace('bg-filter-', '');
+                    ws[cellRef].s.fill = { fgColor: { rgb: lightenColor(hex).toUpperCase() } };
+                }
+            }
+        }
+    });
+
+    // Applica stili alle righe dati
+    let rowIndex = 1;
+    gridApi.forEachNodeAfterFilterAndSort(node => {
+        if (!node.data) return;
+
+        let rowColorHex = null;
+        if (currentRowFilters && currentRowFilters.length > 0) {
+            const longDescKey = findLongDescriptionKey(node.data);
+            if (longDescKey) {
+                const value = (node.data[longDescKey] === undefined || node.data[longDescKey] === null) ? '' : String(node.data[longDescKey]).toLowerCase();
+                for (const rule of currentRowFilters) {
+                    if (rule.action === 'highlight' && rule.pattern && rule.color) {
+                        if (value.includes(rule.pattern.toLowerCase())) {
+                            rowColorHex = lightenColor(rule.color).toUpperCase();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        let prevNodeData = null;
+        if (highlightChanges && node.rowIndex > 0) {
+            let prevNode = gridApi.getDisplayedRowAtIndex(node.rowIndex - 1);
+            if (prevNode && prevNode.data) {
+                prevNodeData = prevNode.data;
+            }
+        }
+
+        visibleCols.forEach((col, colIndex) => {
+            let colDef = col.getColDef();
+            let cellRef = XLSX.utils.encode_cell({ c: colIndex, r: rowIndex });
+            if (!ws[cellRef]) return;
+
+            let cellStyle = { alignment: { vertical: "center", horizontal: "center" } };
+            if (colDef.cellClass && colDef.cellClass.includes('left-aligned-cell')) {
+                cellStyle.alignment.horizontal = "left";
+            }
+
+            let isHighlightChange = false;
+            if (highlightChanges && colDef.field && colDef.field.toUpperCase().startsWith('S_') && prevNodeData) {
+                let currentVal = node.data[colDef.field];
+                let prevVal = prevNodeData[colDef.field];
+                if (currentVal === "") currentVal = null;
+                if (prevVal === "") prevVal = null;
+                if (currentVal != prevVal) isHighlightChange = true;
+            }
+
+            let finalColor = rowColorHex;
+            if (isHighlightChange) {
+                finalColor = lightenColor("FF9800").toUpperCase(); // Arancione variazione
+            } else if (!finalColor && colDef.headerClass) {
+                let colorClass = colDef.headerClass.find(c => c.startsWith('bg-filter-'));
+                if (colorClass) {
+                    finalColor = lightenColor(colorClass.replace('bg-filter-', '')).toUpperCase();
+                }
+            }
+
+            if (finalColor) {
+                cellStyle.fill = { fgColor: { rgb: finalColor } };
+            }
+            
+            // Colore alternato per leggibilità
+            if (!finalColor && colDef.cellClass && colDef.cellClass.includes('col-even')) {
+                cellStyle.fill = { fgColor: { rgb: "F8F9FA" } };
+            }
+
+            ws[cellRef].s = cellStyle;
+        });
+
+        rowIndex++;
+    });
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Diagnostica");
 
