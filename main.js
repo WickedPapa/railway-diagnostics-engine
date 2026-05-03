@@ -276,6 +276,40 @@ function initEventListeners() {
     btnExport.addEventListener('click', exportPresets);
     importInput.addEventListener('change', importPresets);
 
+    // Dropdown Logic
+    document.addEventListener('click', (e) => {
+        const isDropdownButton = e.target.closest('.dropdown-toggle');
+        const isDropdownMenu = e.target.closest('.dropdown-menu');
+        
+        if (!isDropdownButton && !isDropdownMenu) {
+            document.querySelectorAll('.dropdown.active').forEach(dropdown => {
+                dropdown.classList.remove('active');
+            });
+            return;
+        }
+
+        if (isDropdownButton) {
+            const currentDropdown = isDropdownButton.closest('.dropdown');
+            const isActive = currentDropdown.classList.contains('active');
+            
+            document.querySelectorAll('.dropdown.active').forEach(dropdown => {
+                if (dropdown !== currentDropdown) dropdown.classList.remove('active');
+            });
+            
+            if (isActive) {
+                currentDropdown.classList.remove('active');
+            } else {
+                currentDropdown.classList.add('active');
+            }
+        }
+        
+        if (isDropdownMenu) {
+            if (e.target.tagName.toLowerCase() === 'button' && !e.target.classList.contains('dropdown-toggle')) {
+                isDropdownMenu.closest('.dropdown').classList.remove('active');
+            }
+        }
+    });
+
     // Modal
     btnCloseModal.addEventListener('click', closeModal);
     btnCancelModal.addEventListener('click', closeModal);
