@@ -578,7 +578,7 @@ function initAgGrid() {
             if (autoSizeTimeout) clearTimeout(autoSizeTimeout);
             autoSizeTimeout = setTimeout(() => {
                 if (!params.api || !window.currentGridColIds) return;
-                
+
                 const colsToAutoSize = window.currentGridColIds.filter(id => !userResizedColumns.has(id));
                 if (colsToAutoSize.length > 0) {
                     params.api.autoSizeColumns(colsToAutoSize, true);
@@ -638,7 +638,7 @@ function updateDynamicColumnStyles() {
         styleTag.id = 'dynamicColumnStyles';
         document.head.appendChild(styleTag);
     }
-    
+
     let cssRules = '';
     if (currentColumnFilters && currentColumnFilters.length > 0) {
         currentColumnFilters.forEach((rule) => {
@@ -678,13 +678,13 @@ function generateColumnDefs(presetId) {
         let def = { field: col, headerName: col };
         let colUpper = col.toUpperCase();
         let colClass = index % 2 === 0 ? 'col-even' : 'col-odd';
-        
+
         def.cellClass = [colClass];
         def.headerClass = [colClass];
 
         let dictEntry = currentDictionary[colUpper] || currentDictionary[col];
         let alias = dictEntry ? (dictEntry.alias || '') : '';
-        
+
         let cellStyle = null;
         let headerColorClass = null;
         if (currentColumnFilters && currentColumnFilters.length > 0) {
@@ -739,7 +739,7 @@ function generateColumnDefs(presetId) {
             };
         } else if (colUpper.startsWith('S_')) {
             def.headerClass.push('vertical-header');
-            def.width = 60;
+            def.width = 28;
             def.cellClassRules = {
                 'highlight-change': (params) => {
                     try {
@@ -850,7 +850,7 @@ function applyPresetToGrid() {
 
     const newColDefs = generateColumnDefs(currentPresetId);
     gridApi.setGridOption('columnDefs', newColDefs);
-    
+
     window.currentGridColIds = newColDefs.map(c => c.field);
 
     updateInvariantColumnsVisibility();
