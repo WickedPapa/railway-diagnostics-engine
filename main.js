@@ -646,10 +646,10 @@ function handleXLSXFile(file) {
             const workbook = XLSX.read(data, { type: 'array' });
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-            
+
             // Usiamo header: 1 per ottenere un array di array, così possiamo gestire le intestazioni manualmente
             const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-            
+
             if (rows.length > 0) {
                 const totalColumns = rows[0];
                 const jsonData = rows.slice(1).map(row => {
@@ -667,7 +667,7 @@ function handleXLSXFile(file) {
             handleLoadError("Errore durante la lettura del file Excel: " + error.message);
         }
     };
-    reader.onerror = function() {
+    reader.onerror = function () {
         handleLoadError("Errore durante il caricamento del file.");
     };
     reader.readAsArrayBuffer(file);
@@ -685,7 +685,7 @@ function processLoadedData(data, totalColumns) {
     } else {
         handleLoadError("Dati non validi o mancanti.");
     }
-    
+
     loadingOverlay.classList.remove('active');
     setTimeout(() => { loadingOverlay.style.display = 'none'; }, 200);
 }
@@ -1306,10 +1306,19 @@ function renderDictTable() {
                 <td><input type="number" class="dict-input" data-field="ordine_funzione" data-key="${r.key}" value="${r.ordine_funzione !== null ? r.ordine_funzione : ''}"></td>
                 <td><input type="number" class="dict-input" data-field="ordine_apparato" data-key="${r.key}" value="${r.ordine_apparato !== null ? r.ordine_apparato : ''}"></td>
                 <td><input type="number" class="dict-input" data-field="ordine_cabina" data-key="${r.key}" value="${r.ordine_cabina !== null ? r.ordine_cabina : ''}"></td>
+                <td style="text-align: center;">
+                    <button class="btn icon-btn danger-hover" onclick="removeDictRow('${r.key.replace(/'/g, "\\'")}')" title="Rimuovi Colonna">🗑</button>
+                </td>
             </tr>
         `);
     });
     dictTableBody.innerHTML = fragments.join('');
+    window.removeDictRow = function (key) {
+        if (confirm(`Sicuro di voler rimuovere '${key}' dal dizionario?`)) {
+            delete currentDictionary[key];
+            renderDictTable();
+        }
+    };
 }
 
 function saveDictChanges() {
