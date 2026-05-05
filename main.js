@@ -739,6 +739,10 @@ function processLoadedData(data, totalColumns) {
         allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
         rawData = applyRowFilters(rawDataAllRows);
         presets['fixed_mandatory'].columns = computeBaseColumns();
+        
+        // Torna sempre al preset OBBLIGATORIE al caricamento di un nuovo file
+        setPresetSelection('fixed_mandatory');
+        
         initAgGrid();
     } else {
         handleLoadError("Dati non validi o mancanti.");
