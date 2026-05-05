@@ -13,6 +13,7 @@ let useAliasForHeaders = false;
 let currentExclusions = [];
 let currentRowFilters = [];
 let tempRowFilters = [];
+let currentGridTheme = 'ag-theme-alpine-dark';
 
 const MANDATORY_COLUMNS = (typeof CONFIG !== 'undefined' && CONFIG.MANDATORY_COLUMNS)
     ? CONFIG.MANDATORY_COLUMNS
@@ -232,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initColumnFilters();
     initDictionary();
     loadPresetsFromStorage();
+    initGridTheme();
     updatePresetDropdown();
     initEventListeners();
 });
@@ -259,6 +261,15 @@ function initEventListeners() {
         if (e.target.classList.contains('sort-option')) {
             setSortSelection(e.target.dataset.value);
             applyPresetToGrid();
+
+            // Chiudi il menu
+            const dropdown = e.target.closest('.dropdown');
+            if (dropdown) dropdown.classList.remove('active');
+        }
+
+        if (e.target.classList.contains('theme-option')) {
+            const newTheme = e.target.dataset.value;
+            setGridTheme(newTheme);
 
             // Chiudi il menu
             const dropdown = e.target.closest('.dropdown');
@@ -557,6 +568,8 @@ function loadPresetsFromStorage() {
             delete customPresets['base'];
             delete customPresets['fixed_mandatory'];
             delete customPresets['fixed_all'];
+            delete customPresets['fixed_mandatory'];
+            delete customPresets['fixed_all'];
         } catch (e) {
             console.error("Errore nel caricamento presets", e);
         }
@@ -597,6 +610,30 @@ function updateActionButtonsState() {
     btnDelete.style.opacity = isFixed ? '0.3' : '1';
     btnEdit.style.cursor = isFixed ? 'not-allowed' : 'pointer';
     btnDelete.style.cursor = isFixed ? 'not-allowed' : 'pointer';
+}
+
+// --- Theme Management ---
+function initGridTheme() {
+    const savedTheme = localStorage.getItem('csvGridTheme');
+    if (savedTheme) {
+        setGridTheme(savedTheme);
+    }
+}
+
+function setGridTheme(themeName) {
+    if (!myGrid) return;
+    
+    // Rimuovi tutte le classi di tema conosciute
+    const themes = [
+        'ag-theme-alpine', 'ag-theme-alpine-dark',
+        'ag-theme-quartz', 'ag-theme-quartz-dark',
+        'ag-theme-balham', 'ag-theme-balham-dark'
+    ];
+    
+    themes.forEach(t => myGrid.classList.remove(t));
+    myGrid.classList.add(themeName);
+    currentGridTheme = themeName;
+    localStorage.setItem('csvGridTheme', themeName);
 }
 
 // --- CSV Loading & Grid ---
@@ -701,7 +738,8 @@ function handleLoadError(message) {
 
 function initAgGrid() {
     const gridOptions = {
-        columnDefs: generateColumnDefs('base'),
+        theme: 'legacy',
+        columnDefs: generateColumnDefs(currentPresetId),
         rowData: rawData,
         headerHeight: 350,
         floatingFiltersHeight: 50,
@@ -1030,17 +1068,22 @@ function openModal(mode) {
     tempSelectedColumns.clear();
 
     if (mode === 'clone') {
-        const titleSuffix = currentPresetId === 'base' ? "Nuova Vista" : presets[currentPresetId].name + " - Copia";
+        const titleSuffix = (currentPresetId === 'fixed_mandatory' || currentPresetId === 'fixed_all') ? "Nuova Vista" : presets[currentPresetId].name + " - Copia";
         modalTitle.textContent = "Crea Nuovo Preset (Da: " + presets[currentPresetId].name + ")";
         presetNameInput.value = titleSuffix;
 
-        const currentCols = presets[currentPresetId].columns;
-        currentCols.forEach(col => tempSelectedColumns.add(col));
+        const currentCols = sanitizeColumnsForCurrentData(presets[currentPresetId].columns);
+        if (currentPresetId === 'fixed_all') {
+            allColumns.forEach(col => tempSelectedColumns.add(col));
+        } else {
+            currentCols.forEach(col => tempSelectedColumns.add(col));
+        }
+        
         if (presets[currentPresetId].defaultSortOrder) {
             presetSortSelect.value = presets[currentPresetId].defaultSortOrder;
         }
     } else {
-        if (currentPresetId === 'base') return;
+        if (presets[currentPresetId] && presets[currentPresetId].isFixed) return;
         editingPresetId = currentPresetId;
         modalTitle.textContent = "Modifica Preset: " + presets[currentPresetId].name;
         presetNameInput.value = presets[currentPresetId].name;
@@ -1487,7 +1530,7 @@ function reloadAllColumnsFromData() {
 
     let totalColumns = Object.keys(referenceRow);
     allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
-    presets['base'].columns = computeBaseColumns();
+    presets['fixed_mandatory'].columns = computeBaseColumns();
     rawData = applyRowFilters(rawDataAllRows);
     initAgGrid();
 }
