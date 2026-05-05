@@ -98,7 +98,7 @@ function refreshRowFilteringAndGrid() {
 
 // Struttura Presets: { id : { name: string, columns: string[], defaultSortOrder: string, isFixed: boolean } }
 const SYSTEM_PRESETS = {
-    'fixed_mandatory': { name: 'OBBLIGATORIE', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none', isFixed: true },
+    'fixed_mandatory': { name: 'PRESET', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none', isFixed: true },
     'fixed_all': { name: 'TUTTE', columns: [], defaultSortOrder: 'none', isFixed: true }
 };
 
@@ -556,7 +556,7 @@ function saveDictionaryToStorage() {
 // --- Storage Management Presets ---
 function checkAndMigrateStorage() {
     const savedVersion = localStorage.getItem('csvAppVersion');
-    
+
     if (!savedVersion) {
         // Prima volta o versione molto vecchia (pre-1.1.0)
         // Pulizia selettiva di chiavi legacy che potrebbero causare errori
@@ -567,7 +567,7 @@ function checkAndMigrateStorage() {
         // Qui aggiungeremo logiche di migrazione specifiche per versioni future
         // Esempio: if (savedVersion === '1.0.0') { ... migra qualcosa ... }
     }
-    
+
     localStorage.setItem('csvAppVersion', APP_VERSION);
 }
 
@@ -709,10 +709,10 @@ function processLoadedData(data, totalColumns) {
         allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
         rawData = applyRowFilters(rawDataAllRows);
         presets['fixed_mandatory'].columns = computeBaseColumns();
-        
+
         // Torna sempre al preset OBBLIGATORIE al caricamento di un nuovo file
         setPresetSelection('fixed_mandatory');
-        
+
         initAgGrid();
     } else {
         handleLoadError("Dati non validi o mancanti.");
@@ -1072,7 +1072,7 @@ function openModal(mode) {
         } else {
             currentCols.forEach(col => tempSelectedColumns.add(col));
         }
-        
+
         if (presets[currentPresetId].defaultSortOrder) {
             presetSortSelect.value = presets[currentPresetId].defaultSortOrder;
         }

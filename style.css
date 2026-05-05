@@ -522,7 +522,7 @@ body {
 }
 
 /* AG Grid Dark Theme customizations to match aesthetics */
-.ag-theme-alpine-dark {
+.ag-theme-balham-dark {
     --ag-background-color: var(--panel-bg);
     --ag-foreground-color: var(--text-primary);
     --ag-header-background-color: rgba(0, 0, 0, 0.3);
@@ -734,8 +734,8 @@ body {
     border-radius: 3px;
 }
 
-.ag-theme-alpine-dark .ag-cell,
-.ag-theme-alpine-dark .ag-header-cell {
+.ag-theme-balham-dark .ag-cell,
+.ag-theme-balham-dark .ag-header-cell {
     font-size: 11px;
     padding: 0px !important;
     text-align: center;
@@ -746,7 +746,7 @@ body {
     padding-left: 12px !important;
 }
 
-.ag-theme-alpine-dark .ag-header-cell-label {
+.ag-theme-balham-dark .ag-header-cell-label {
     justify-content: center !important;
     align-items: center !important;
 }
@@ -755,17 +755,17 @@ body {
     justify-content: flex-start !important;
 }
 
-.ag-theme-alpine-dark .ag-floating-filter {
+.ag-theme-balham-dark .ag-floating-filter {
     display: flex;
     justify-content: center !important;
     align-items: center !important;
 }
 
-.ag-theme-alpine-dark .ag-floating-filter-body {
+.ag-theme-balham-dark .ag-floating-filter-body {
     display: none !important;
 }
 
-.ag-theme-alpine-dark .ag-floating-filter-button {
+.ag-theme-balham-dark .ag-floating-filter-button {
     margin: 0 auto !important;
     display: flex;
     justify-content: center;

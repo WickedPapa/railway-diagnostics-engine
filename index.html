@@ -9,6 +9,7 @@
     <script src="libs/papaparse.min.js"></script>
     <script src="libs/ag-grid-community.min.js"></script>
     <script src="libs/xlsx-js-style.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community/styles/ag-theme-balham.css">
     <link rel="stylesheet" href="style.css?v=3">
     <!-- Google Fonts for typography -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -48,11 +49,10 @@
                 <div class="dropdown" id="presetDropdownContainer">
                     <button class="btn icon-btn dropdown-toggle" title="Seleziona Preset" id="presetDropdownBtn"
                         style="min-width: 180px; justify-content: space-between;">
-                        <span id="presetDropdownLabel">OBBLIGATORIE</span> ▾
+                        <span id="presetDropdownLabel">PRESET</span> ▾
                     </button>
                     <div class="dropdown-menu" id="presetDropdownMenu">
-                        <button class="dropdown-item preset-option" data-value="fixed_mandatory">SOLO
-                            OBBLIGATORIE</button>
+                        <button class="dropdown-item preset-option" data-value="fixed_mandatory">PRESET</button>
                         <!-- Dynamic options here -->
                     </div>
                 </div>
@@ -155,7 +155,7 @@
             <p>Carica un file CSV per visualizzare i dati e gestire i preset.</p>
         </div>
         <!-- AG Grid Container -->
-        <div id="myGrid" class="ag-theme-alpine-dark" style="height: 100%; width: 100%; display: none;"></div>
+        <div id="myGrid" class="ag-theme-balham-dark" style="height: 100%; width: 100%; display: none;"></div>
     </main>
 
     <!-- Modal for cloning/editing preset -->
