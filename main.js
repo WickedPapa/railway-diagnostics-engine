@@ -16,7 +16,7 @@ let useAliasForHeaders = false;
 let currentExclusions = [];
 let currentRowFilters = [];
 let tempRowFilters = [];
-let currentGridTheme = 'ag-theme-alpine-dark';
+
 
 const MANDATORY_COLUMNS = (typeof CONFIG !== 'undefined' && CONFIG.MANDATORY_COLUMNS)
     ? CONFIG.MANDATORY_COLUMNS
@@ -237,7 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initDictionary();
     checkAndMigrateStorage();
     loadPresetsFromStorage();
-    initGridTheme();
     updatePresetDropdown();
     initEventListeners();
 });
@@ -271,14 +270,7 @@ function initEventListeners() {
             if (dropdown) dropdown.classList.remove('active');
         }
 
-        if (e.target.classList.contains('theme-option')) {
-            const newTheme = e.target.dataset.value;
-            setGridTheme(newTheme);
 
-            // Chiudi il menu
-            const dropdown = e.target.closest('.dropdown');
-            if (dropdown) dropdown.classList.remove('active');
-        }
     });
 
     const chkTruncateDesc = document.getElementById('chkTruncateDesc');
@@ -633,29 +625,7 @@ function updateActionButtonsState() {
     btnDelete.style.cursor = isFixed ? 'not-allowed' : 'pointer';
 }
 
-// --- Theme Management ---
-function initGridTheme() {
-    const savedTheme = localStorage.getItem('csvGridTheme');
-    if (savedTheme) {
-        setGridTheme(savedTheme);
-    }
-}
 
-function setGridTheme(themeName) {
-    if (!myGrid) return;
-    
-    // Rimuovi tutte le classi di tema conosciute
-    const themes = [
-        'ag-theme-alpine', 'ag-theme-alpine-dark',
-        'ag-theme-quartz', 'ag-theme-quartz-dark',
-        'ag-theme-balham', 'ag-theme-balham-dark'
-    ];
-    
-    themes.forEach(t => myGrid.classList.remove(t));
-    myGrid.classList.add(themeName);
-    currentGridTheme = themeName;
-    localStorage.setItem('csvGridTheme', themeName);
-}
 
 // --- CSV Loading & Grid ---
 function handleFileUpload(e) {
@@ -763,7 +733,6 @@ function handleLoadError(message) {
 
 function initAgGrid() {
     const gridOptions = {
-        theme: 'legacy',
         columnDefs: generateColumnDefs(currentPresetId),
         rowData: rawData,
         headerHeight: 350,
