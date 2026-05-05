@@ -610,36 +610,93 @@ function handleFileUpload(e) {
     emptyState.style.display = 'none';
     userResizedColumns.clear();
 
+    const fileExt = file.name.split('.').pop().toLowerCase();
+
+    if (fileExt === 'xlsx' || fileExt === 'xls') {
+        handleXLSXFile(file);
+    } else {
+        handleCSVFile(file);
+    }
+}
+
+function handleCSVFile(file) {
     Papa.parse(file, {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
         complete: function (results) {
             if (results.data.length > 0) {
-                secondaryHeaders = results.data[0];
-                rawDataAllRows = results.data.slice(1);
-                // Apply exclusions immediately upon extracting columns
-                let totalColumns = results.meta.fields || (rawDataAllRows[0] ? Object.keys(rawDataAllRows[0]) : []);
-                allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
-                rawData = applyRowFilters(rawDataAllRows);
-                presets['fixed_mandatory'].columns = computeBaseColumns();
-                initAgGrid();
+                const totalColumns = results.meta.fields || (results.data[0] ? Object.keys(results.data[0]) : []);
+                processLoadedData(results.data, totalColumns);
             } else {
-                rawData = [];
-                rawDataAllRows = [];
-                alert("Il file CSV sembra essere vuoto o non valido.");
-                emptyState.style.display = 'block';
+                handleLoadError("Il file CSV sembra essere vuoto o non valido.");
             }
-            loadingOverlay.classList.remove('active');
-            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 200);
         },
         error: function (error) {
-            loadingOverlay.classList.remove('active');
-            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 200);
-            alert("Errore durante la lettura del CSV: " + error.message);
-            emptyState.style.display = 'block';
+            handleLoadError("Errore durante la lettura del CSV: " + error.message);
         }
     });
+}
+
+function handleXLSXFile(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Usiamo header: 1 per ottenere un array di array, così possiamo gestire le intestazioni manualmente
+            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+            
+            if (rows.length > 0) {
+                const totalColumns = rows[0];
+                const jsonData = rows.slice(1).map(row => {
+                    const obj = {};
+                    totalColumns.forEach((header, i) => {
+                        obj[header] = row[i];
+                    });
+                    return obj;
+                });
+                processLoadedData(jsonData, totalColumns);
+            } else {
+                handleLoadError("Il file Excel sembra essere vuoto.");
+            }
+        } catch (error) {
+            handleLoadError("Errore durante la lettura del file Excel: " + error.message);
+        }
+    };
+    reader.onerror = function() {
+        handleLoadError("Errore durante il caricamento del file.");
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function processLoadedData(data, totalColumns) {
+    if (data.length > 0) {
+        secondaryHeaders = data[0];
+        rawDataAllRows = data.slice(1);
+        // Apply exclusions immediately upon extracting columns
+        allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
+        rawData = applyRowFilters(rawDataAllRows);
+        presets['fixed_mandatory'].columns = computeBaseColumns();
+        initAgGrid();
+    } else {
+        handleLoadError("Dati non validi o mancanti.");
+    }
+    
+    loadingOverlay.classList.remove('active');
+    setTimeout(() => { loadingOverlay.style.display = 'none'; }, 200);
+}
+
+function handleLoadError(message) {
+    rawData = [];
+    rawDataAllRows = [];
+    alert(message);
+    emptyState.style.display = 'block';
+    loadingOverlay.classList.remove('active');
+    setTimeout(() => { loadingOverlay.style.display = 'none'; }, 200);
 }
 
 function initAgGrid() {
