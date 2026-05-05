@@ -1,3 +1,6 @@
+// Versione Applicazione per migrazione storage
+const APP_VERSION = '1.1.0';
+
 // Variabili Globali
 let rawData = [];
 let rawDataAllRows = [];
@@ -232,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initRowFilters();
     initColumnFilters();
     initDictionary();
+    checkAndMigrateStorage();
     loadPresetsFromStorage();
     initGridTheme();
     updatePresetDropdown();
@@ -558,6 +562,23 @@ function saveDictionaryToStorage() {
 }
 
 // --- Storage Management Presets ---
+function checkAndMigrateStorage() {
+    const savedVersion = localStorage.getItem('csvAppVersion');
+    
+    if (!savedVersion) {
+        // Prima volta o versione molto vecchia (pre-1.1.0)
+        // Pulizia selettiva di chiavi legacy che potrebbero causare errori
+        localStorage.removeItem('csvPresets'); // Reset preset per evitare conflitti con i nuovi ID fissi
+        console.log("Storage migrato alla versione " + APP_VERSION + " (Reset iniziale)");
+    } else if (savedVersion !== APP_VERSION) {
+        console.log("Migrazione storage da " + savedVersion + " a " + APP_VERSION);
+        // Qui aggiungeremo logiche di migrazione specifiche per versioni future
+        // Esempio: if (savedVersion === '1.0.0') { ... migra qualcosa ... }
+    }
+    
+    localStorage.setItem('csvAppVersion', APP_VERSION);
+}
+
 function loadPresetsFromStorage() {
     const saved = localStorage.getItem('csvPresets');
     let customPresets = {};
