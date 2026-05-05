@@ -921,6 +921,25 @@ function generateColumnDefs(presetId) {
                 }
                 return params.value;
             };
+
+            // Stile condizionale per nascondere/colorare solo la descrizione
+            def.cellStyle = (params) => {
+                if (!params.data || !currentRowFilters || currentRowFilters.length === 0) return null;
+                const val = String(params.value || '').toLowerCase();
+                for (const rule of currentRowFilters) {
+                    if (rule.pattern) {
+                        const p = rule.pattern.toLowerCase();
+                        if (val.includes(p)) {
+                            if (rule.action === 'hide_desc') {
+                                return { color: 'transparent' };
+                            } else if (rule.action === 'color_desc' && rule.color) {
+                                return { backgroundColor: rule.color + '44' };
+                            }
+                        }
+                    }
+                }
+                return null;
+            };
         } else if (colUpper.startsWith('S_')) {
             def.headerClass.push('vertical-header');
             def.width = 28;
@@ -1638,7 +1657,7 @@ function renderRowFilterTable() {
         const currentAction = rule.action || 'hide';
         const currentColor = rule.color || '#ffff00';
 
-        const isHighlight = currentAction === 'highlight';
+        const isColorAction = (currentAction === 'highlight' || currentAction === 'color_desc');
 
         const listAttr = pattern.length >= 3 ? 'list="longDescSuggestions"' : '';
         const safePattern = pattern.replace(/"/g, '&quot;');
@@ -1656,10 +1675,12 @@ function renderRowFilterTable() {
                     <div style="display: flex; gap: 8px; align-items: center;">
                         <select class="action-select" style="flex: 1;" onchange="updateRowFilterAction(${originalIndex}, this.value)">
                             <option value="hide" ${currentAction === 'hide' ? 'selected' : ''}>🚫 Nascondi</option>
-                            <option value="highlight" ${currentAction === 'highlight' ? 'selected' : ''}>🎨 Colora</option>
+                            <option value="highlight" ${currentAction === 'highlight' ? 'selected' : ''}>🎨 Colora Riga</option>
+                            <option value="hide_desc" ${currentAction === 'hide_desc' ? 'selected' : ''}>👻 Nascondi Desc.</option>
+                            <option value="color_desc" ${currentAction === 'color_desc' ? 'selected' : ''}>🖍️ Colora Desc.</option>
                         </select>
                         <input type="color" class="color-picker-input" value="${currentColor}" 
-                               ${!isHighlight ? 'style="display:none"' : ''}
+                               ${!isColorAction ? 'style="display:none"' : ''}
                                onchange="updateRowFilterColor(${originalIndex}, this.value)">
                     </div>
                 </td>
