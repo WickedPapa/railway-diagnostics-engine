@@ -4,7 +4,7 @@ let rawDataAllRows = [];
 let secondaryHeaders = {};
 let allColumns = [];
 let gridApi = null;
-let currentPresetId = 'base';
+let currentPresetId = 'fixed_mandatory';
 let currentDictionary = {};
 let truncateDesc = true;
 let highlightChanges = (typeof CONFIG !== 'undefined' && CONFIG.DEFAULT_HIGHLIGHT_CHANGES !== undefined) ? CONFIG.DEFAULT_HIGHLIGHT_CHANGES : true;
@@ -92,10 +92,13 @@ function refreshRowFilteringAndGrid() {
     }
 }
 
-// Struttura Presets: { id : { name: string, columns: string[], defaultSortOrder: string } }
-let presets = {
-    'base': { name: 'Default', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' }
+// Struttura Presets: { id : { name: string, columns: string[], defaultSortOrder: string, isFixed: boolean } }
+const SYSTEM_PRESETS = {
+    'fixed_mandatory': { name: 'OBBLIGATORIE', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none', isFixed: true },
+    'fixed_all': { name: 'TUTTE', columns: [], defaultSortOrder: 'none', isFixed: true }
 };
+
+let presets = { ...SYSTEM_PRESETS };
 
 // --- DOM Elements ---
 const fileInput = document.getElementById('csvFileInput');
@@ -124,7 +127,8 @@ function setPresetSelection(value) {
     if (p) {
         presetDropdownLabel.textContent = p.name;
     } else {
-        presetDropdownLabel.textContent = 'Base (Tutte le colonne)';
+        presetDropdownLabel.textContent = 'SOLO OBBLIGATORIE';
+        currentPresetId = 'fixed_mandatory';
     }
 }
 
@@ -545,18 +549,28 @@ function saveDictionaryToStorage() {
 // --- Storage Management Presets ---
 function loadPresetsFromStorage() {
     const saved = localStorage.getItem('csvPresets');
+    let customPresets = {};
     if (saved) {
         try {
-            const parsed = JSON.parse(saved);
-            presets = { ...parsed, base: { name: 'Default', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' } };
+            customPresets = JSON.parse(saved);
+            // Rimuovi eventuali vecchi preset 'base' o preset con nomi dei fissi per evitare duplicati
+            delete customPresets['base'];
+            delete customPresets['fixed_mandatory'];
+            delete customPresets['fixed_all'];
         } catch (e) {
             console.error("Errore nel caricamento presets", e);
         }
     }
+    presets = { ...SYSTEM_PRESETS, ...customPresets };
 }
 
 function savePresetsToStorage() {
-    localStorage.setItem('csvPresets', JSON.stringify(presets));
+    const customPresets = { ...presets };
+    // Non salvare i preset fissi nello storage locale per evitare conflitti con aggiornamenti futuri
+    for (const id in SYSTEM_PRESETS) {
+        delete customPresets[id];
+    }
+    localStorage.setItem('csvPresets', JSON.stringify(customPresets));
 }
 
 function updatePresetDropdown() {
@@ -576,13 +590,13 @@ function updatePresetDropdown() {
 }
 
 function updateActionButtonsState() {
-    const isBase = currentPresetId === 'base';
-    btnEdit.disabled = isBase;
-    btnDelete.disabled = isBase;
-    btnEdit.style.opacity = isBase ? '0.3' : '1';
-    btnDelete.style.opacity = isBase ? '0.3' : '1';
-    btnEdit.style.cursor = isBase ? 'not-allowed' : 'pointer';
-    btnDelete.style.cursor = isBase ? 'not-allowed' : 'pointer';
+    const isFixed = presets[currentPresetId] && presets[currentPresetId].isFixed;
+    btnEdit.disabled = isFixed;
+    btnDelete.disabled = isFixed;
+    btnEdit.style.opacity = isFixed ? '0.3' : '1';
+    btnDelete.style.opacity = isFixed ? '0.3' : '1';
+    btnEdit.style.cursor = isFixed ? 'not-allowed' : 'pointer';
+    btnDelete.style.cursor = isFixed ? 'not-allowed' : 'pointer';
 }
 
 // --- CSV Loading & Grid ---
@@ -608,7 +622,7 @@ function handleFileUpload(e) {
                 let totalColumns = results.meta.fields || (rawDataAllRows[0] ? Object.keys(rawDataAllRows[0]) : []);
                 allColumns = totalColumns.filter(col => !currentExclusions.includes(col));
                 rawData = applyRowFilters(rawDataAllRows);
-                presets['base'].columns = computeBaseColumns();
+                presets['fixed_mandatory'].columns = computeBaseColumns();
                 initAgGrid();
             } else {
                 rawData = [];
@@ -1136,6 +1150,10 @@ function savePresetFromModal() {
         setSortSelection(orderSelection);
     } else if (modalMode === 'edit') {
         if (editingPresetId && presets[editingPresetId]) {
+            if (presets[editingPresetId].isFixed) {
+                alert("Non è possibile modificare i preset di sistema.");
+                return;
+            }
             presets[editingPresetId].name = name;
             presets[editingPresetId].columns = finalColumns;
             presets[editingPresetId].defaultSortOrder = orderSelection;
@@ -1150,12 +1168,12 @@ function savePresetFromModal() {
 }
 
 function deleteCurrentPreset() {
-    if (currentPresetId === 'base') return;
+    if (presets[currentPresetId] && presets[currentPresetId].isFixed) return;
 
     if (confirm(`Sei sicuro di voler eliminare il preset "${presets[currentPresetId].name}"?`)) {
         delete presets[currentPresetId];
         savePresetsToStorage();
-        currentPresetId = 'base';
+        currentPresetId = 'fixed_mandatory';
         setSortSelection('none');
         updatePresetDropdown();
         applyPresetToGrid();
@@ -1163,17 +1181,16 @@ function deleteCurrentPreset() {
 }
 
 function deleteAllPresets() {
-    if (Object.keys(presets).length <= 1) {
+    const customPresetsCount = Object.keys(presets).length - Object.keys(SYSTEM_PRESETS).length;
+    if (customPresetsCount <= 0) {
         alert("Non ci sono preset personalizzati da eliminare.");
         return;
     }
 
     if (confirm("Sei sicuro di voler eliminare TUTTI i preset personalizzati in un colpo solo? L'operazione è irreversibile.")) {
-        presets = {
-            'base': presets['base']
-        };
+        presets = { ...SYSTEM_PRESETS };
         savePresetsToStorage();
-        currentPresetId = 'base';
+        currentPresetId = 'fixed_mandatory';
         setSortSelection('none');
         updatePresetDropdown();
         applyPresetToGrid();
@@ -1314,7 +1331,11 @@ function importPresets(e) {
         try {
             const imported = JSON.parse(event.target.result);
             if (imported && typeof imported === 'object') {
-                presets = { ...presets, ...imported, base: { name: 'Default', columns: [...MANDATORY_COLUMNS], defaultSortOrder: 'none' } };
+                // Rimuovi eventuali preset di sistema dall'import per non sovrascrivere quelli attuali
+                for (const id in SYSTEM_PRESETS) {
+                    delete imported[id];
+                }
+                presets = { ...SYSTEM_PRESETS, ...imported };
                 savePresetsToStorage();
                 updatePresetDropdown();
                 alert("Preset importati con successo!");
@@ -1392,7 +1413,7 @@ function reloadAllColumnsFromData() {
     let referenceRow = rawDataAllRows[0] || rawData[0] || null;
     if (!referenceRow) {
         allColumns = [];
-        presets['base'].columns = [];
+        presets['fixed_mandatory'].columns = [];
         rawData = applyRowFilters(rawDataAllRows);
         initAgGrid();
         return;
